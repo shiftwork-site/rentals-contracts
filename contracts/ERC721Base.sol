@@ -36,6 +36,7 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
     //////////////////////////////////////////////////////////////*/
 
     mapping(uint256 => string) private fullURI;
+    mapping(uint256 => uint256) public tokenToCollection;
 
     /*//////////////////////////////////////////////////////////////
                             Constructor
@@ -95,30 +96,22 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
      *  @param _to       The recipient of the NFT to mint.
      *  @param _tokenURI The full metadata URI for the NFT minted.
      */
-    function mintTo(address _to, string memory _tokenURI) public virtual {
+    function mintTo(uint256 blueprintId, address _to, string memory _tokenURI) public virtual { 
         require(_canMint(), "Not authorized to mint.");
-        fullURI[nextTokenIdToMint()] = _tokenURI;
+        uint256 newTokenId = nextTokenIdToMint();
+        fullURI[newTokenId] = _tokenURI;
         _safeMint(_to, 1, "");
+        tokenToCollection[newTokenId] = blueprintId;
     }
 
     /**
-     *  @notice          Lets an authorized address mint multiple NFTs at once to a recipient.
-     *  @dev             The logic in the `_canMint` function determines whether the caller is authorized to mint NFTs.
-     *
-     *  @param _to       The recipient of the NFT to mint.
-     *  @param _quantity The number of NFTs to mint.
-     *  @param _baseURI  The baseURI for the `n` number of NFTs minted. The metadata for each NFT is `baseURI/tokenId`
-     *  @param _data     Additional data to pass along during the minting of the NFT.
-     */
-    function batchMintTo(
-        address _to,
-        uint256 _quantity,
-        string memory _baseURI,
-        bytes memory _data
-    ) public virtual {
-        require(_canMint(), "Not authorized to mint.");
-        _batchMintMetadata(nextTokenIdToMint(), _quantity, _baseURI);
-        _safeMint(_to, _quantity, _data);
+      @notice          Disabled.
+        */
+    function batchMintTo() public virtual {
+        revert("Batch minting is disabled.");
+        // require(_canMint(), "Not authorized to mint.");
+        // _batchMintMetadata(nextTokenIdToMint(), _quantity, _baseURI);
+        // _safeMint(_to, _quantity, _data);
     }
 
     /**
