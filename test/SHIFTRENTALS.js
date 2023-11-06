@@ -1,3 +1,5 @@
+const { ethers } = require("hardhat");
+
 describe("SHIFTRENTALS", async function () {
   let nftContractFactory;
   let nftContract;
@@ -21,10 +23,29 @@ describe("SHIFTRENTALS", async function () {
     console.log(await nftContract.tokenURI(0));
   });
 
-  it("should set user successfully", async () => {
+  it("should set user successfully, but expired date", async () => {
+    const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
     await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
-    await nftContract.connect(addr1).setUser(0, addr4.address, "1698676372");
+    // await nftContract.connect(addr1).payAndSetUser(0, addr4.address, "1698676372", { value: amountToSend }); // already expired
+    await expect(nftContract.connect(addr1).payAndSetUser(0, addr4.address, "1698676372"), { value: amountToSend }).to.be.revertedWith('Timestamp is in the past');
+    expect(await nftContract.ownerOf(0)).to.equal(addr1.address);
+    expect(await nftContract.userOf(0)).to.equal("0x0000000000000000000000000000000000000000");
+  });
+
+  it("should set user successfully, for future date", async () => {
+    const timestamp = 33255651568;
+    const now = Math.floor(Date.now() / 1000);
+    console.log({ now })
+    const difference = timestamp - now;
+    console.log({ difference })
+    const hours = new Date(difference).getHours();
+    console.log({ hours })
+    const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
+    await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
+    await nftContract.connect(addr1).payAndSetUser(0, addr4.address, timestamp, { value: amountToSend });
+    expect(await nftContract.ownerOf(0)).to.equal(addr1.address);
     expect(await nftContract.userOf(0)).to.equal(addr4.address);
+
   });
 
   it("should transfer Ownership By Owner", async () => {
