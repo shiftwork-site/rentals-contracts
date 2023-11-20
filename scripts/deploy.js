@@ -7,11 +7,21 @@
 const hre = require("hardhat");
 
 async function main() {
-  const nftContract = await hre.ethers.deployContract("SHIFTRENTALS", ["SHIFTRENTALS", "SRT", "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", 1], {});
 
-  await nftContract.waitForDeployment();
+  const erc20TokenContract = await hre.ethers.deployContract("SHIFTTOKEN", ["SHIFTTOKEN", "SHIFT"], {});
+  const res2 = await erc20TokenContract.waitForDeployment();
+  const erc20TokenAddress = res2.target;
+  console.log("ERC20 contract deployed to:", erc20TokenAddress);
 
-  console.log("NFT contract deployed to:", nftContract.target);
+  const tempErc20 = "0x28D4Ec0d785076E43371B0F454111e98e4890D68";
+  const nftContract = await hre.ethers.deployContract("SHIFTRENTALS", ["SHIFTRENTALS", "SRT", "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", 1, tempErc20], {});
+  const res = await nftContract.waitForDeployment();
+  const nftAddress = res.target;
+  console.log("Rentable contract deployed to:", nftAddress);
+
+  await erc20TokenContract.updateAllowedWhitelistContract(nftAddress);
+  console.log("Rentable contract can now update whitelist for tokens:", nftAddress);
+
 
 }
 
