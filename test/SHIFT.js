@@ -5,6 +5,9 @@ describe("SHIFT", async function () {
   let erc20TokenContract;
   let erc20TokenAddress;
   let nftContractFactory;
+  let proofContractFactory;
+  let proofContract;
+  let proofAddress;
   let nftContract;
   let addr1;
   let addr2;
@@ -13,22 +16,29 @@ describe("SHIFT", async function () {
 
   beforeEach(async () => {
     [addr1, addr2, addr3, addr4] = await ethers.getSigners();
+
+    proofContractFactory = await hre.ethers.getContractFactory('SHIFTPROOFS');
+    proofContract = await hre.ethers.deployContract("SHIFTPROOFS", ["0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86"], {});
+    const res3 = await proofContract.waitForDeployment();
+    proofAddress = res3.target;
+
     erc20TokenContractFactory = await hre.ethers.getContractFactory('SHIFTTOKEN');
     erc20TokenContract = await hre.ethers.deployContract("SHIFTTOKEN", ["SHIFTTOKEN", "SHIFT"], {});
     const res = await erc20TokenContract.waitForDeployment();
     erc20TokenAddress = res.target;
 
     nftContractFactory = await hre.ethers.getContractFactory('SHIFTRENTALS');
-    nftContract = await hre.ethers.deployContract("SHIFTRENTALS", ["SHIFTRENTALS", "SRT", addr1.address, 1, erc20TokenAddress], {});
+    nftContract = await hre.ethers.deployContract("SHIFTRENTALS", ["SHIFTRENTALS", "SRT", addr1.address, 1, erc20TokenAddress, proofAddress], {});
     const res2 = await nftContract.waitForDeployment();
     nftAddress = res2.target;
 
     await erc20TokenContract.updateAllowedWhitelistContract(nftAddress);
 
 
+
   });
 
-  it("should mint successfully", async () => {
+  it("should mint rental successfully", async () => {
     await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
     expect(await nftContract.nextTokenIdToMint()).to.equal("1");
     await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
@@ -142,6 +152,23 @@ describe("SHIFT", async function () {
     const airdroppedAmount2 = ethers.formatEther(await erc20TokenContract.airdroppedAmount())
     expect(airdroppedAmount2).to.equal("7.0");
   });
+
+  // ################# PROOF TESTS #################
+
+  it("should mint proof", async () => {
+    await proofContract.mint(
+      "0xF1862117037cF3F11C998981F54eD2045e57E4DA",
+      "0x6c3e38f2b3b7f21a6ebe6aaccb6cc669dfe78ae6",
+      "03 Sep 2023 14:12",
+      "03 Sep 2023 15:12",
+      "0.01 ETH",
+      "Ars Electronica",
+      "Outis Nemo",
+      30,
+      "Geraldine Honauer"
+    );
+  });
 });
+
 
 
