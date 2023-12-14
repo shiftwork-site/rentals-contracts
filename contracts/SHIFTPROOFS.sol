@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "hardhat/console.sol";
 
-contract SHIFTPROOFS is ERC1155, Ownable {
+contract SHIFTPROOFS is ERC721, Ownable {
     address public manager;
-    string public name = "SHIFT PROOF OF RENTS";
 
-    event TokenMinted(uint256 tokenId, address minter);
+    mapping(uint256 => address) private _tokenApprovals;
+
+    event ProofOfRentMinted(uint256 tokenId);
 
     uint256 public tokenIdTracker;
 
@@ -24,8 +26,9 @@ contract SHIFTPROOFS is ERC1155, Ownable {
     mapping(uint256 => mapping(address => bool)) private hasMinted;
     mapping(uint256 => uint256) public tokenToCollection;
 
-    constructor(address payable _royaltyRecipient) ERC1155("") {
-        _setupOwner(msg.sender);
+    constructor(
+        address payable _royaltyRecipient
+    ) ERC721("SHIFT PROOF OF RENTS", "SPR") {
         manager = 0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86;
         globalRoyaltyRecipient = _royaltyRecipient;
     }
@@ -56,7 +59,7 @@ contract SHIFTPROOFS is ERC1155, Ownable {
 
     function mint(
         string memory renter,
-        string memory performer,
+        address user,
         string memory startRental,
         string memory endRental,
         string memory rentalFee,
@@ -67,6 +70,11 @@ contract SHIFTPROOFS is ERC1155, Ownable {
     ) external returns (uint256) {
         tokenIdTracker += 1;
         uint256 newTokenId = tokenIdTracker;
+
+        string memory performer = Strings.toHexString(
+            uint256(uint160(user)),
+            20
+        );
 
         _tokenURIs[newTokenId] = _constructTokenURI(
             newTokenId,
@@ -81,9 +89,10 @@ contract SHIFTPROOFS is ERC1155, Ownable {
             artist
         );
 
-        _mint(msg.sender, newTokenId, 1, "");
+        _mint(address(this), newTokenId);
+        _tokenApprovals[newTokenId] = user;
 
-        emit TokenMinted(newTokenId, msg.sender);
+        emit ProofOfRentMinted(newTokenId);
 
         return newTokenId;
     }
@@ -167,50 +176,18 @@ contract SHIFTPROOFS is ERC1155, Ownable {
         return finalUri;
     }
 
-    // function createProofNFT(
-    //     uint256 blueprintId,
-    //     string memory metadataURI
-    // ) external ownerOrMgr returns (uint256) {
+    function claim(uint256 tokenId) public {
+        require(
+            _tokenApprovals[tokenId] == msg.sender,
+            "Caller not approved to claim this token"
+        );
+        _approve(msg.sender, tokenId, address(this));
+        transferFrom(address(this), msg.sender, tokenId);
 
-    //     tokenIdTracker += 1;
-    //     uint256 newTokenId = tokenIdTracker;
+        delete _tokenApprovals[tokenId];
+    }
 
-    //     _tokenURIs[newTokenId] = metadataURI;
-
-    //     _mint(msg.sender, newTokenId, 1, "");
-
-    //     emit TokenMinted(newTokenId, msg.sender);
-
-    //     tokenToCollection[newTokenId] = blueprintId;
-
-    //     tokenMintCount[newTokenId]++;
-
-    //     hasMinted[newTokenId][msg.sender] = true;
-    //     tokenMinterCount[newTokenId]++;
-
-    //     return newTokenId;
-    // }
-
-    // function mint(address account, uint256 tokenId, uint256 amount) public {
-    //     // uint256 blueprintId = tokenToCollection[tokenId];
-
-    //     // maybe enable later
-    //     // require(
-    //     //     collections[blueprintId].mintingEnabled,
-    //     //     "Minting is not enabled for this collection."
-    //     // );
-
-    //     _mint(account, tokenId, amount, "");
-    //     tokenMintCount[tokenId]++;
-
-    //     if (!hasMinted[tokenId][account]) {
-    //         hasMinted[tokenId][account] = true;
-    //         tokenMinterCount[tokenId]++;
-    //     }
-    //     emit TokenMinted(tokenId, account);
-    // }
-
-        function uintToString(uint256 value) public pure returns (string memory) {
+    function uintToString(uint256 value) public pure returns (string memory) {
         if (value == 0) {
             return "0";
         }
@@ -247,9 +224,10 @@ contract SHIFTPROOFS is ERC1155, Ownable {
         _tokenURIs[tokenId] = newURI;
     }
 
-    function uri(uint256 tokenId) public view override returns (string memory) {
+    function uri(uint256 tokenId) public view returns (string memory) {
         return _tokenURIs[tokenId];
     }
 
     function _canSetOwner() internal virtual override returns (bool) {}
+
 }

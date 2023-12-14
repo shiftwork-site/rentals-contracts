@@ -50,7 +50,7 @@ describe("SHIFT", async function () {
     const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
     await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
     // await nftContract.connect(addr1).payAndSetUser(0, addr4.address, "1698676372", { value: amountToSend }); // already expired
-    await expect(nftContract.connect(addr1).payAndSetUser(0, addr4.address, "1698676372"), { value: amountToSend }).to.be.revertedWith('Timestamp is in the past');
+    await expect(nftContract.connect(addr1).payAndSetUser(0, addr4.address, "1698676372", "CollectionB", "WearableB"), { value: amountToSend }).to.be.revertedWith('Timestamp is in the past');
     expect(await nftContract.ownerOf(0)).to.equal(addr1.address);
     expect(await nftContract.userOf(0)).to.equal("0x0000000000000000000000000000000000000000");
   });
@@ -64,7 +64,7 @@ describe("SHIFT", async function () {
     console.log({ differenceInHours })
     const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
     await nftContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
-    await nftContract.connect(addr1).payAndSetUser(0, addr4.address, timestampInFutureMilliSeconds, { value: amountToSend });
+    await nftContract.connect(addr1).payAndSetUser(0, addr4.address, timestampInFutureMilliSeconds, "CollectionA", "WearableA", { value: amountToSend });
     expect(await nftContract.ownerOf(0)).to.equal(addr1.address);
     expect(await nftContract.userOf(0)).to.equal(addr4.address);
 
@@ -155,10 +155,10 @@ describe("SHIFT", async function () {
 
   // ################# PROOF TESTS #################
 
-  it("should mint proof", async () => {
+  it("should mint two proofs and successfully transfer one, but fail on second", async () => {
     await proofContract.mint(
       "0xF1862117037cF3F11C998981F54eD2045e57E4DA",
-      "0x6c3e38f2b3b7f21a6ebe6aaccb6cc669dfe78ae6",
+      addr1.address,
       "03 Sep 2023 14:12",
       "03 Sep 2023 15:12",
       "0.01 ETH",
@@ -167,7 +167,28 @@ describe("SHIFT", async function () {
       30,
       "Geraldine Honauer"
     );
+    await proofContract.mint(
+      "0xF1862117037cF3F11C998981F54eD2045e57E4DA",
+      addr2.address,
+      "03 Sep 2023 14:12",
+      "03 Sep 2023 15:12",
+      "0.01 ETH",
+      "Ars Electronica",
+      "Outis Nemo",
+      30,
+      "Geraldine Honauer"
+    );
+    expect(await proofContract.tokenIdTracker()).to.equal("2");
+    await proofContract.connect(addr1).claim(1);
+    expect(await proofContract.ownerOf(1)).to.equal(addr1.address);
+    try {
+      await proofContract.connect(addr1).claim(2);
+      assert.fail("Caller not approved to claim this token");
+    } catch (error) {
+      console.error(error);
+    }
   });
+
 });
 
 

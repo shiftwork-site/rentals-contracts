@@ -21,6 +21,8 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
     SHIFTTOKEN public shiftToken;
     SHIFTPROOFS public shiftProofs;
 
+    event NewRental(uint256 tokenId, address user, uint64 expires);
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -28,12 +30,10 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         uint128 _royaltyBps,
         address _shiftTokenAddress,
         address _shiftProofsAddress
-
     ) ERC721Base(_name, _symbol, _royaltyRecipient, _royaltyBps) {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         shiftToken = SHIFTTOKEN(_shiftTokenAddress); // Initialize the SHIFTTOKEN contract
         shiftProofs = SHIFTPROOFS(_shiftProofsAddress); // Initialize the SHIFTTOKEN contract
-
     }
 
     modifier ownerOrMgr() {
@@ -48,41 +48,73 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         manager = _manager;
     }
 
+    function processUser(
+        uint256 tokenId,
+        address user,
+        uint64 expires
+    ) internal {
+        UserInfo storage info = _users[tokenId];
+        info.user = user;
+        info.expires = expires;
+        emit NewRental(tokenId, user, expires);
+    }
+
+    function mintProofNFT(
+        address user,
+        string memory collectionName,
+        string memory wearableName,
+        uint256 earnedTokens
+    ) internal {
+        string memory renter = Strings.toHexString(
+            uint256(uint160(owner())),
+            20
+        ); // not sure
+
+        string memory startRental = "03 Sep 2023 14:12";
+        string memory endRental = "03 Sep 2023 15:12";
+        string memory rentalFee = etherToString(pricePerHour);
+        string memory collection = collectionName;
+        string memory wearable = wearableName;
+        uint256 remuneration = earnedTokens;
+        string memory artist = "Geraldine Honauer";
+
+        shiftProofs.mint(
+            renter,
+            user, // = performer
+            startRental,
+            endRental,
+            rentalFee,
+            collection,
+            wearable,
+            remuneration,
+            artist
+        );
+    }
+
     // only for testing and manager / owner to avoid fees
     function setUser(
         uint256 tokenId,
         address user,
-        uint64 expires
+        uint64 expires,
+        string memory collectionName,
+        string memory wearableName
     ) public virtual ownerOrMgr {
         // owner and manager can overwrite any user
-        UserInfo storage info = _users[tokenId];
-        info.user = user;
-        info.expires = expires;
-        emit UpdateUser(tokenId, user, expires);
+        processUser(tokenId, user, expires);
 
         uint256 workedHours = calculateHoursDifference(expires);
         uint256 earnedTokens = earnableShiftTokenPerHour * workedHours;
 
         shiftToken.setWhitelistAmount(user, earnedTokens);
-
-        string memory renter =  Strings.toHexString(uint256(uint160(owner())), 20); // not sure
-        string memory performer = Strings.toHexString(uint256(uint160(user)), 20);
-        string memory startRental = "03 Sep 2023 14:12";
-        string memory endRental = "03 Sep 2023 15:12";
-        string memory rentalFee = "0.01 ETH";
-        string memory collection = "Ars Electronica";
-        string memory wearable = "Outis Nemo";
-        uint256 remuneration = earnedTokens;
-        string memory artist = "Geraldine Honauer";
-
-        shiftProofs.mint(renter, performer, startRental, endRental, rentalFee, collection, wearable, remuneration, artist);
+        mintProofNFT(user, collectionName, wearableName, earnedTokens);
     }
-
 
     function payAndSetUser(
         uint256 tokenId,
         address user,
-        uint64 expires
+        uint64 expires,
+        string memory collectionName,
+        string memory wearableName
     ) public payable {
         require(expires >= block.timestamp, "Timestamp is in the past");
         require(msg.value > 0, "No ETH sent");
@@ -104,15 +136,11 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         );
 
         // Set user after payment is successful
-        UserInfo storage info = _users[tokenId];
-        info.user = user;
-        info.expires = expires;
-        emit UpdateUser(tokenId, user, expires);
+        processUser(tokenId, user, expires);
 
         shiftToken.setWhitelistAmount(user, earnedTokens);
 
-        // create proof nft
-        // TODO add user to whitelist for ERC1155 proof of rents
+        mintProofNFT(user, collectionName, wearableName, earnedTokens);
     }
 
     /// @notice Get the user address of an NFT
@@ -130,12 +158,13 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
     function calculateHoursDifference(
         uint256 timestampInMilliseconds
     ) public view returns (uint256) {
-        uint256 differenceInSeconds = timestampInMilliseconds / 1000 - block.timestamp;
+        uint256 differenceInSeconds = timestampInMilliseconds /
+            1000 -
+            block.timestamp;
         uint256 differenceInHours = differenceInSeconds / 1 hours;
         console.log("differenceInHours", differenceInHours);
         return differenceInHours;
     }
-
 
     // TODO probably broken!!!!
     function withdraw(
@@ -167,4 +196,48 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
             interfaceId == type(IERC4907).interfaceId ||
             super.supportsInterface(interfaceId);
     }
+
+    function etherToString(uint256 amount) public pure returns (string memory) {
+        // Assuming the amount is in Wei
+        uint256 eth = amount / 1e18;
+        uint256 remainder = (amount - (eth * 1e18)) / 1e16; // Getting two decimal places
+
+        // Converting the integer parts to strings
+        string memory ethStr = uintToString(eth);
+        string memory remainderStr = uintToString(remainder);
+
+        // Padding the remainder if necessary
+        if (remainder < 10) {
+            remainderStr = string(abi.encodePacked("0", remainderStr));
+        }
+
+        // Concatenating the strings
+        return string(abi.encodePacked(ethStr, ".", remainderStr, " ETH"));
+    }
+
+    function uintToString(uint256 value) internal pure returns (string memory) {
+        // Convert a uint to a string
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
+    }
+
+    function setUser(
+        uint256 tokenId,
+        address user,
+        uint64 expires
+    ) external override {}
 }
