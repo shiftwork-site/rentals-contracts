@@ -21,15 +21,11 @@ contract SHIFTPROOFS is ERC721, Ownable {
     uint256 public globalRoyaltyPercentage = 10;
 
     mapping(uint256 => string) private _tokenURIs;
-    mapping(uint256 => uint256) public tokenMintCount;
-    mapping(uint256 => uint256) public tokenMinterCount;
-    mapping(uint256 => mapping(address => bool)) private hasMinted;
-    mapping(uint256 => uint256) public tokenToCollection;
 
     constructor(
         address payable _royaltyRecipient
     ) ERC721("SHIFT PROOF OF RENTS", "SPR") {
-        manager = 0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86;
+        manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         globalRoyaltyRecipient = _royaltyRecipient;
     }
 
@@ -48,7 +44,7 @@ contract SHIFTPROOFS is ERC721, Ownable {
     modifier ownerOrMgr() {
         require(
             msg.sender == owner() || msg.sender == manager,
-            "Not owner or manager"
+            "Not owner or manager of SHOFTPROOFS"
         );
         _;
     }
@@ -146,12 +142,12 @@ contract SHIFTPROOFS is ERC721, Ownable {
             )
         );
         string memory attributes = string(
-            abi.encodePacked('", "attributes":[]"')
+            abi.encodePacked('", "attributes":[]')
         );
 
         string memory name = string(abi.encodePacked("Proof of Rent"));
         string memory description = string(
-            abi.encodePacked("ColorHueState Block #")
+            abi.encodePacked("Proof of Rent Lorem ipsum")
         );
         string memory json = Base64.encode(
             bytes(
@@ -213,18 +209,9 @@ contract SHIFTPROOFS is ERC721, Ownable {
         return (globalRoyaltyRecipient, royaltyAmount);
     }
 
-    function setTokenURI(
-        uint256 tokenId,
-        string memory newURI
-    ) external ownerOrMgr {
-        require(
-            bytes(_tokenURIs[tokenId]).length > 0,
-            "Token ID does not exist"
-        );
-        _tokenURIs[tokenId] = newURI;
-    }
-
-    function uri(uint256 tokenId) public view returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721) returns (string memory) {
         return _tokenURIs[tokenId];
     }
 

@@ -32,6 +32,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         address _shiftProofsAddress
     ) ERC721Base(_name, _symbol, _royaltyRecipient, _royaltyBps) {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
+
         shiftToken = SHIFTTOKEN(_shiftTokenAddress); // Initialize the SHIFTTOKEN contract
         shiftProofs = SHIFTPROOFS(_shiftProofsAddress); // Initialize the SHIFTTOKEN contract
     }
@@ -39,7 +40,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
     modifier ownerOrMgr() {
         require(
             msg.sender == owner() || msg.sender == manager,
-            "Not owner or manager"
+            "Not owner or manager of SHIFTRENTALS"
         );
         _;
     }
@@ -64,7 +65,8 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         string memory collectionName,
         string memory wearableName,
         uint256 earnedTokens
-    ) internal {
+    ) public {
+        // string memory renter = "Ox";
         string memory renter = Strings.toHexString(
             uint256(uint160(owner())),
             20
@@ -116,7 +118,10 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         string memory collectionName,
         string memory wearableName
     ) public payable {
-        require(expires >= block.timestamp, "Timestamp is in the past");
+        require(
+            (expires / 1000) >= block.timestamp,
+            "Timestamp is in the past"
+        );
         require(msg.value > 0, "No ETH sent");
 
         uint256 workedHours = calculateHoursDifference(expires);
@@ -131,7 +136,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         // Check if user is already set and not expired
         require(
             _users[tokenId].user == address(0) ||
-                _users[tokenId].expires < block.timestamp,
+                ((_users[tokenId].expires / 1000) < block.timestamp),
             "User already set and not expired"
         );
 
@@ -148,7 +153,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
     /// @param tokenId The NFT to get the user address for
     /// @return The user address for this NFT
     function userOf(uint256 tokenId) public view virtual returns (address) {
-        if (uint256(_users[tokenId].expires) >= block.timestamp) {
+        if ((uint256(_users[tokenId].expires / 1000)) >= block.timestamp) {
             return _users[tokenId].user;
         } else {
             return address(0);

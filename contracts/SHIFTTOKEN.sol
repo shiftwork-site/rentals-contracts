@@ -32,7 +32,7 @@ contract SHIFTTOKEN is ERC20, Ownable {
     modifier ownerOrMgr() {
         require(
             msg.sender == owner() || msg.sender == manager,
-            "Not owner or manager"
+            "Not owner or manager of SHIFTTOKEN"
         );
         _;
     }

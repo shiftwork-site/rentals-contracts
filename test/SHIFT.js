@@ -55,6 +55,7 @@ describe("SHIFT", async function () {
     expect(await nftContract.userOf(0)).to.equal("0x0000000000000000000000000000000000000000");
   });
 
+
   it("should set user successfully, for future date", async () => {
     const timestampInFutureMilliSeconds = 1731789462 * 1000;
     const timestampInFuture = new Date(timestampInFutureMilliSeconds);
@@ -67,9 +68,9 @@ describe("SHIFT", async function () {
     await nftContract.connect(addr1).payAndSetUser(0, addr4.address, timestampInFutureMilliSeconds, "CollectionA", "WearableA", { value: amountToSend });
     expect(await nftContract.ownerOf(0)).to.equal(addr1.address);
     expect(await nftContract.userOf(0)).to.equal(addr4.address);
-
     const whiteListAmount = ethers.formatEther(await erc20TokenContract.getWhitelistedAmount(addr4.address))
     console.log({ whiteListAmount })
+    await nftContract.connect(addr1).setUser(0, addr4.address, timestampInFutureMilliSeconds, "CollectionA", "WearableA");
 
 
   });
@@ -151,6 +152,14 @@ describe("SHIFT", async function () {
     await erc20TokenContract.airdropTokens(addr1.address, 2);
     const airdroppedAmount2 = ethers.formatEther(await erc20TokenContract.airdroppedAmount())
     expect(airdroppedAmount2).to.equal("7.0");
+  });
+
+  it("should mint from rentals", async () => {
+    await nftContract.mintProofNFT(
+      addr1.address,
+      "Coll Test",
+      "Wear Test",
+      30);
   });
 
   // ################# PROOF TESTS #################
