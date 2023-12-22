@@ -8,8 +8,8 @@ import "./interface/IERC721A.sol";
 import "./interface/IERC721Receiver.sol";
 import "../lib/TWAddress.sol";
 import "./Context.sol";
-import "../lib/TWStrings.sol";
 import "./ERC165.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
@@ -23,7 +23,6 @@ import "./ERC165.sol";
  */
 contract ERC721A is Context, ERC165, IERC721A {
     using TWAddress for address;
-    using TWStrings for uint256;
 
     // The tokenId of the next token to be minted.
     uint256 internal _currentIndex;
@@ -192,7 +191,7 @@ contract ERC721A is Context, ERC165, IERC721A {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _baseURI();
-        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
+        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, Strings.toString(tokenId))) : "";
     }
 
     /**
@@ -612,4 +611,14 @@ contract ERC721A is Context, ERC165, IERC721A {
         uint256 startTokenId,
         uint256 quantity
     ) internal virtual {}
+
+        function _msgSender() internal view virtual override(Context) returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual override(Context) returns (bytes calldata) {
+        return msg.data;
+    }
+
+
 }

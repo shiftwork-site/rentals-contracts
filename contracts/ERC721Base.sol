@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import { ERC721A } from "./ERC721A.sol";
+import {ERC721A} from "./ERC721A.sol";
 
 import "./ContractMetadata.sol";
 import "./Multicall.sol";
-import "./Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Royalty.sol";
 import "./BatchMintMetadata.sol";
 
@@ -28,8 +28,17 @@ import "../lib/TWStrings.sol";
  *      - EIP 2981 compliance for royalty support on NFT marketplaces.
  */
 
-contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, BatchMintMetadata {
+contract ERC721Base is
+    ERC721A,
+    ContractMetadata,
+    Multicall,
+    Ownable,
+    Royalty,
+    BatchMintMetadata
+{
     using TWStrings for uint256;
+
+    address public manager;
 
     /*//////////////////////////////////////////////////////////////
                             Mappings
@@ -46,10 +55,11 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
         string memory _name,
         string memory _symbol,
         address _royaltyRecipient,
-        uint128 _royaltyBps
-    ) ERC721A(_name, _symbol) {
-        _setupOwner(msg.sender);
+        uint128 _royaltyBps,
+        address initialOwner
+    ) Ownable(initialOwner) ERC721A(_name, _symbol) {
         _setupDefaultRoyaltyInfo(_royaltyRecipient, _royaltyBps);
+        manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -57,7 +67,9 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
     //////////////////////////////////////////////////////////////*/
 
     /// @dev See ERC165: https://eips.ethereum.org/EIPS/eip-165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721A, IERC165) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721A, IERC165) returns (bool) {
         return
             interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
             interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
@@ -75,7 +87,9 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
      *
      *  @param _tokenId The tokenId of an NFT.
      */
-    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory) {
+    function tokenURI(
+        uint256 _tokenId
+    ) public view virtual override returns (string memory) {
         string memory fullUriForToken = fullURI[_tokenId];
         if (bytes(fullUriForToken).length > 0) {
             return fullUriForToken;
@@ -96,7 +110,11 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
      *  @param _to       The recipient of the NFT to mint.
      *  @param _tokenURI The full metadata URI for the NFT minted.
      */
-    function mintTo(uint256 blueprintId, address _to, string memory _tokenURI) public virtual { 
+    function mintTo(
+        uint256 blueprintId,
+        address _to,
+        string memory _tokenURI
+    ) public virtual {
         require(_canMint(), "Not authorized to mint.");
         uint256 newTokenId = nextTokenIdToMint();
         fullURI[newTokenId] = _tokenURI;
@@ -134,12 +152,10 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
     }
 
     /// @notice Returns whether a given address is the owner, or approved to transfer an NFT.
-    function isApprovedOrOwner(address _operator, uint256 _tokenId)
-        public
-        view
-        virtual
-        returns (bool isApprovedOrOwnerOf)
-    {
+    function isApprovedOrOwner(
+        address _operator,
+        uint256 _tokenId
+    ) public view virtual returns (bool isApprovedOrOwnerOf) {
         address owner = ownerOf(_tokenId);
         isApprovedOrOwnerOf = (_operator == owner ||
             isApprovedForAll(owner, _operator) ||
@@ -151,22 +167,54 @@ contract ERC721Base is ERC721A, ContractMetadata, Multicall, Ownable, Royalty, B
     //////////////////////////////////////////////////////////////*/
 
     /// @dev Returns whether contract metadata can be set in the given execution context.
-    function _canSetContractURI() internal view virtual override returns (bool) {
+    function _canSetContractURI()
+        internal
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return msg.sender == owner();
     }
 
     /// @dev Returns whether a token can be minted in the given execution context.
     function _canMint() internal view virtual returns (bool) {
-        return msg.sender == owner();
+        return msg.sender == owner() || msg.sender == manager;
     }
 
     /// @dev Returns whether owner can be set in the given execution context.
-    function _canSetOwner() internal view virtual override returns (bool) {
+    function _canSetOwner() internal view virtual returns (bool) {
         return msg.sender == owner();
     }
 
     /// @dev Returns whether royalty info can be set in the given execution context.
-    function _canSetRoyaltyInfo() internal view virtual override returns (bool) {
+    function _canSetRoyaltyInfo()
+        internal
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return msg.sender == owner();
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ERC721A, Context)
+        returns (address)
+    {
+        return msg.sender;
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ERC721A, Context)
+        returns (bytes calldata)
+    {
+        return msg.data;
     }
 }

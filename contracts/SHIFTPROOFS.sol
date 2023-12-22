@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./Ownable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "hardhat/console.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SHIFTPROOFS is ERC721, Ownable {
-    address public manager;
-
+contract SHIFTPROOFS is Ownable, ERC721 {
     mapping(uint256 => address) private _tokenApprovals;
 
     event ProofOfRentMinted(uint256 tokenId);
 
     uint256 public tokenIdTracker;
+
+    address public manager;
 
     // Global royalty settings
     address payable public globalRoyaltyRecipient;
@@ -23,15 +23,29 @@ contract SHIFTPROOFS is ERC721, Ownable {
     mapping(uint256 => string) private _tokenURIs;
 
     constructor(
+        address initialOwner,
         address payable _royaltyRecipient
-    ) ERC721("SHIFT PROOF OF RENTS", "SPR") {
+    ) Ownable(initialOwner) ERC721("SHIFT PROOF OF RENTS", "SPR") {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         globalRoyaltyRecipient = _royaltyRecipient;
     }
 
+    modifier ownerOrMgr() {
+        require(
+            msg.sender == owner() || msg.sender == manager,
+            "Not owner or manager of SHIFTPROOFS"
+        );
+        _;
+    }
+
+    function setManager(address _manager) external ownerOrMgr {
+        manager = _manager;
+    }
+
     function contractURI() external pure returns (string memory) {
         string
-            memory json = '{"name": "SHIFT PROOF OF RENTS","description": "Claim an on-chain proof-of-rent NFT artwork capturing your metaverse performance."}';
+            memory json = '{"name": "PROOF OF SHIFTWORK", "description": "Welcome to PROOF OF SHIFTWORK! This NFT collection resembles the receipts issued by SHIFT acknowledging that a blockchain-entity has rented the digital twin workwear of an actual museum worker </>SHIFT WEAR</> and performed labor of value in the Metaverse in their name. SHIFT is a performance-based media artwork that critically reflects on structures of value. The project investigates human labor by entangling the physical with the digital realm and transcoding actual corporate workwear into yielding digital assets. Learn more: </>SHIFTWORK.CC</>"}';
+
         return
             string(
                 abi.encodePacked(
@@ -41,25 +55,16 @@ contract SHIFTPROOFS is ERC721, Ownable {
             );
     }
 
-    modifier ownerOrMgr() {
-        require(
-            msg.sender == owner() || msg.sender == manager,
-            "Not owner or manager of SHOFTPROOFS"
-        );
-        _;
-    }
-
-    function setManager(address _manager) external ownerOrMgr {
-        manager = _manager;
-    }
-
     function mint(
-        string memory renter,
         address user,
+        address worker,
         string memory startRental,
+        string memory startRentalDate,
         string memory endRental,
         string memory rentalFee,
         string memory collection,
+        string memory employer,
+        string memory place,
         string memory wearable,
         uint256 remuneration,
         string memory artist
@@ -67,55 +72,24 @@ contract SHIFTPROOFS is ERC721, Ownable {
         tokenIdTracker += 1;
         uint256 newTokenId = tokenIdTracker;
 
-        string memory performer = Strings.toHexString(
+        string memory stringifiedWorker = Strings.toHexString(
+            uint256(uint160(worker)),
+            20
+        );
+
+        string memory stringifiedUser = Strings.toHexString(
             uint256(uint160(user)),
             20
         );
 
-        _tokenURIs[newTokenId] = _constructTokenURI(
-            newTokenId,
-            renter,
-            performer,
-            startRental,
-            endRental,
-            rentalFee,
-            collection,
-            wearable,
-            remuneration,
-            artist
-        );
-
-        _mint(address(this), newTokenId);
-        _tokenApprovals[newTokenId] = user;
-
-        emit ProofOfRentMinted(newTokenId);
-
-        return newTokenId;
-    }
-
-    function _constructTokenURI(
-        uint256 tokenId,
-        string memory renter,
-        string memory performer,
-        string memory startRental,
-        string memory endRental,
-        string memory rentalFee,
-        string memory collection,
-        string memory wearable,
-        uint256 remuneration,
-        string memory artist
-    ) internal view returns (string memory) {
-        // only working with ERC721
-        // require(_exists(tokenId), "Nonexistent token.");
-
         string memory svgBase64 = Base64.encode(
             abi.encodePacked(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">',
-                '<text x="10" y="20">Renter: ',
-                renter,
+                '<text x="10" y="20">SHIFT Renter: ',
+                stringifiedUser,
                 "</text>",
                 '<text x="10" y="40">Performer: ',
-                performer,
+                stringifiedWorker,
                 "</text>",
                 '<text x="10" y="60">Start Rental: ',
                 startRental,
@@ -133,7 +107,7 @@ contract SHIFTPROOFS is ERC721, Ownable {
                 wearable,
                 "</text>",
                 '<text x="10" y="160">Remuneration: ',
-                uintToString(remuneration),
+                Strings.toString(remuneration),
                 " SHIFT </text>",
                 '<text x="10" y="180">Artist: ',
                 artist,
@@ -141,13 +115,48 @@ contract SHIFTPROOFS is ERC721, Ownable {
                 "</svg>"
             )
         );
+
         string memory attributes = string(
-            abi.encodePacked('", "attributes":[]')
+            abi.encodePacked(
+                '", "attributes":[',
+                '{"trait_type":"COLLECTION", "value":"',
+                collection,
+                '"},',
+                '{"trait_type":"DATE", "value":"',
+                startRentalDate,
+                '"},',
+                '{"trait_type":"EMPLOYER", "value":"',
+                employer,
+                '"},',
+                '{"trait_type":"PLACE", "value":"',
+                place,
+                '"},',
+                '{"trait_type":"WORKWEAR", "value":"',
+                wearable,
+                '"},',
+                '{"trait_type":"RENTER", "value":"',
+                stringifiedUser,
+                '"}',
+                "]"
+            )
         );
 
-        string memory name = string(abi.encodePacked("Proof of Rent"));
+        string memory name = string(abi.encodePacked(wearable, " Shiftwork"));
+
         string memory description = string(
-            abi.encodePacked("Proof of Rent Lorem ipsum")
+            abi.encodePacked(
+                "This on-chain generated NFT is proof that ",
+                stringifiedUser,
+                " performed labor of value in the Metaverse by renting the digital twin workwear of ",
+                wearable,
+                " during their shifts for ",
+                collection,
+                " at ",
+                place,
+                " in ",
+                employer,
+                "."
+            )
         );
         string memory json = Base64.encode(
             bytes(
@@ -169,7 +178,14 @@ contract SHIFTPROOFS is ERC721, Ownable {
             abi.encodePacked("data:application/json;base64,", json)
         );
         console.log(finalUri);
-        return finalUri;
+        _tokenURIs[newTokenId] = finalUri;
+
+        _mint(address(this), newTokenId);
+        _tokenApprovals[newTokenId] = user;
+
+        emit ProofOfRentMinted(newTokenId);
+
+        return newTokenId;
     }
 
     function claim(uint256 tokenId) public {
@@ -181,25 +197,6 @@ contract SHIFTPROOFS is ERC721, Ownable {
         transferFrom(address(this), msg.sender, tokenId);
 
         delete _tokenApprovals[tokenId];
-    }
-
-    function uintToString(uint256 value) public pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 length;
-        while (temp != 0) {
-            length++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(length);
-        while (value != 0) {
-            length--;
-            buffer[length] = bytes1(uint8(48 + (value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
     }
 
     function royaltyInfo(
@@ -214,7 +211,4 @@ contract SHIFTPROOFS is ERC721, Ownable {
     ) public view override(ERC721) returns (string memory) {
         return _tokenURIs[tokenId];
     }
-
-    function _canSetOwner() internal virtual override returns (bool) {}
-
 }
