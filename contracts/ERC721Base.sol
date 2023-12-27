@@ -123,16 +123,6 @@ contract ERC721Base is
     }
 
     /**
-      @notice          Disabled.
-        */
-    function batchMintTo() public virtual {
-        revert("Batch minting is disabled.");
-        // require(_canMint(), "Not authorized to mint.");
-        // _batchMintMetadata(nextTokenIdToMint(), _quantity, _baseURI);
-        // _safeMint(_to, _quantity, _data);
-    }
-
-    /**
      *  @notice         Lets an owner or approved operator burn the NFT of the given tokenId.
      *  @dev            ERC721A's `_burn(uint256,bool)` internally checks for token approvals.
      *

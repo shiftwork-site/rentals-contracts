@@ -31,6 +31,11 @@ describe("SHIFT", async function () {
     rentablesContract = await hre.ethers.deployContract("SHIFTRENTALS", [addr1.address, addr1.address, 1, erc20TokenAddress, proofAddress], {});
     const res2 = await rentablesContract.waitForDeployment();
     nftAddress = res2.target;
+
+    await erc20TokenContract.setAirdroppingContract(nftAddress);
+
+    await proofContract.setAllowedContract(nftAddress);
+
   });
 
   // ################# MANAGER / OWNER TESTS #################
@@ -109,27 +114,50 @@ describe("SHIFT", async function () {
     const differenceInMilliseconds = timestampInFuture - now;
     const differenceInHours = differenceInMilliseconds / (1000 * 60 * 60);
     console.log({ differenceInHours })
-    const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
+    const amountToSend = ethers.parseEther("0.03");  // e.g., 0.1 ETH
     await rentablesContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
-    await rentablesContract.connect(addr1).payAndSetUser(0, addr4.address, addr3.address, timestampInFutureMilliSeconds, "CollectionB", "EmployerB", "PlaceB", "WearableB", { value: amountToSend });
+    await rentablesContract.connect(addr1).payAndSetUser(0, addr4.address, addr3.address, 1703714400000, "CollectionB", "EmployerB", "PlaceB", "WearableB", { value: amountToSend });
     expect(await rentablesContract.ownerOf(0)).to.equal(addr1.address);
     expect(await rentablesContract.userOf(0)).to.equal(addr4.address);
-    await rentablesContract.connect(addr1).setUser(0, "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", "0x61a5A64861c839f8F4D9fAA1F6b6F06052BA1C1B", 1703288270000, "CollectionB", "EmployerB", "PlaceB", "WearableB");
   });
 
   // ################# TOKEN TESTS #################
 
-  // it("should updateAllowedWhitelistContract ", async () => {
-  //   await erc20TokenContract.updateAllowedWhitelistContract(addr3.address);
-  //   expect(await erc20TokenContract.allowedContractToSetWhitelist()).to.equal(addr3.address);
-  // });
-
   it("should have initial token minted to contract", async () => {
     const balance = ethers.formatEther(await erc20TokenContract.balanceOf(erc20TokenAddress))
-    expect(balance).to.equal("20.0");
+    expect(balance).to.equal("2000000.0");
     const onwerBalance = ethers.formatEther(await erc20TokenContract.balanceOf(await erc20TokenContract.owner()))
-    expect(onwerBalance).to.equal("2.0");
+    expect(onwerBalance).to.equal("1.0");
+    const expectedReservedForOwner = BigInt("2000000") * BigInt("1000000000000000000"); // 10000000 * 10 ** 18 as BigInt
+    expect(await erc20TokenContract.RESERVED_FOR_OWNER_AND_MANAGER()).to.equal(expectedReservedForOwner);
+    const expectedReservedForPaypouts = BigInt("7000000") * BigInt("1000000000000000000"); // 10000000 * 10 ** 18 as BigInt
+    expect(await erc20TokenContract.RESERVED_FOR_PAYOUTS()).to.equal(expectedReservedForPaypouts);
 
+  });
+
+
+  it("should airdrop tokens to any user", async () => {
+    await erc20TokenContract.airdropTokens(addr3.address, 20)
+    const balance = ethers.formatEther(await erc20TokenContract.balanceOf(addr3))
+    expect(balance).to.equal("20.0");
+  });
+
+  it("should deny airdrop tokens exceeding max airdrops", async () => {
+    await expect(erc20TokenContract.connect(addr1).airdropTokens(addr3.address, 1000001)).to.be.revertedWith("No tokens left for airdops");
+  });
+
+  it("should payout tokens to any user", async () => {
+    await erc20TokenContract.payoutTokens(addr2.address, 40)
+    const balance = ethers.formatEther(await erc20TokenContract.balanceOf(addr2))
+    expect(balance).to.equal("40.0");
+  });
+
+  it("should deny payout tokens exceeding max payout", async () => {
+    await expect(erc20TokenContract.connect(addr1).payoutTokens(addr3.address, 7000001)).to.be.revertedWith("No tokens left for payouts");
+  });
+
+  it("should deny minting tokens", async () => {
+    await expect(erc20TokenContract.connect(addr1).payoutTokens(addr3.address, 7000001)).to.be.revertedWith("No tokens left for payouts");
   });
 
   // TODO test not working but maybe function does and it's only the runner here
@@ -138,48 +166,8 @@ describe("SHIFT", async function () {
   //   console.log(await erc20TokenContract.owner())
   //   // const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
   //   await erc20TokenContract.connect(await erc20TokenContract.owner()).withdraw(await erc20TokenContract.owner(), 3)
-
   // });
 
-  // it("should set address to whitelist with amount", async () => {
-  //   await erc20TokenContract.setWhitelistAmount(addr3.address, 5);
-  //   const balance = ethers.formatEther(await erc20TokenContract.getWhitelistedAmount(addr3.address))
-  //   expect(balance).to.equal("5.0");
-  // });
-
-  // it("should set address to whitelist and payout", async () => {
-  //   await erc20TokenContract.setWhitelistAmount(addr3.address, 5);
-  //   await erc20TokenContract.payoutTokens(addr3.address);
-  //   expect(await erc20TokenContract.getWhitelistedAmount(addr3.address)).to.equal(0);
-  // });
-
-  // it("should fail while trying to payout without any whitelist", async () => {
-  //   try {
-  //     await erc20TokenContract.payoutTokens((addr3.address));
-  //     assert.fail("No whitelisted or already claimed all");
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // });
-
-  // it("should fail while trying to payout after max payouts", async () => {
-  //   await erc20TokenContract.setWhitelistAmount(addr3.address, 60);
-  //   const whiteListAmount = ethers.formatEther(await erc20TokenContract.getWhitelistedAmount(addr3.address))
-  //   expect(whiteListAmount).to.equal("60.0");
-  //   await erc20TokenContract.payoutTokens(addr3.address);
-  //   const payoutAmount = ethers.formatEther(await erc20TokenContract.payoutAmount())
-  //   expect(payoutAmount).to.equal("60.0");
-
-  //   const newWhiteListAmount = ethers.formatEther(await erc20TokenContract.getWhitelistedAmount(addr3.address))
-  //   expect(newWhiteListAmount).to.equal("0.0");
-  //   await erc20TokenContract.setWhitelistAmount(addr2.address, 20);
-  //   try {
-  //     await erc20TokenContract.payoutTokens((addr2.address));
-  //     assert.fail("No tokens left for payouts");
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // });
 
   it("should airdrop token", async () => {
     await erc20TokenContract.airdropTokens(addr4.address, 5);
@@ -193,7 +181,7 @@ describe("SHIFT", async function () {
   it("should mint from rentals", async () => {
     const timestampInFutureMilliSeconds = 1731789462 * 1000;
 
-    await rentablesContract.mintProofNFT(
+    const tx = await rentablesContract.mintProofNFT(
       addr1.address,
       addr2.address,
       "Coll Test",
@@ -203,6 +191,10 @@ describe("SHIFT", async function () {
       30,
       timestampInFutureMilliSeconds
     );
+
+    await tx.wait();
+    // TODO get tokenID and check for "1"
+
   });
 
   // ################# PROOF TESTS #################

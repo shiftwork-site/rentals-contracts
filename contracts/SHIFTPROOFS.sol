@@ -20,6 +20,8 @@ contract SHIFTPROOFS is Ownable, ERC721 {
     address payable public globalRoyaltyRecipient;
     uint256 public globalRoyaltyPercentage = 10;
 
+    address public allowedContract;
+
     mapping(uint256 => string) private _tokenURIs;
 
     constructor(
@@ -37,6 +39,11 @@ contract SHIFTPROOFS is Ownable, ERC721 {
         );
         _;
     }
+
+    function setAllowedContract(address _contract) external ownerOrMgr {
+        allowedContract = _contract;
+    }
+
 
     function setManager(address _manager) external ownerOrMgr {
         manager = _manager;
@@ -69,6 +76,10 @@ contract SHIFTPROOFS is Ownable, ERC721 {
         uint256 remuneration,
         string memory artist
     ) external returns (uint256) {
+        require(
+            msg.sender == allowedContract || msg.sender == manager || msg.sender == owner(),
+            "Not owner or manager or allowed contract to mint"
+        );
         tokenIdTracker += 1;
         uint256 newTokenId = tokenIdTracker;
 

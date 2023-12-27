@@ -46,8 +46,12 @@ async function main() {
   const nftAddress = res.target;
   console.log("Rentable contract deployed to:", nftAddress);
 
-  // await erc20TokenContract.updateAllowedWhitelistContract(nftAddress);
-  // console.log("Rentable contract can now update whitelist for tokens:", nftAddress);
+  await erc20TokenContract.setAirdroppingContract(nftAddress);
+  console.log("Rentable contract can payout tokens.");
+
+  await proofContract.setAllowedContract(nftAddress);
+  console.log("Rentable contract can mint proofs.");
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

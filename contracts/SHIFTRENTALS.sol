@@ -25,6 +25,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
 
     event NewRental(
         uint256 tokenId,
+        uint256 proofTokenId,
         address user,
         uint64 expires,
         string collectionName,
@@ -86,7 +87,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         string memory wearableName,
         uint256 earnedTokens,
         uint64 expires
-    ) public ownerOrMgr {
+    ) internal returns (uint256) {
         (
             uint256 startYear,
             uint256 startMonth,
@@ -132,7 +133,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         string memory rentalFee = etherToString(pricePerHour);
         uint256 remuneration = earnedTokens;
 
-        shiftProofs.mint(
+        uint256 tokenId = shiftProofs.mint(
             user, // = renter
             worker,
             startRental,
@@ -146,6 +147,8 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
             remuneration,
             artist
         );
+
+        return tokenId;
     }
 
     // only for testing and manager / owner to avoid fees
@@ -159,6 +162,10 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         string memory placeName, // POSTCITY
         string memory wearableName
     ) public virtual ownerOrMgr {
+        require(
+            (expires / 1000) >= block.timestamp,
+            "Timestamp is in the past"
+        );
         // owner and manager can overwrite any user
         processUser(tokenId, user, expires);
 
@@ -168,7 +175,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         shiftToken.payoutTokens(user, earnedTokens);
 
         // mint proof to contract
-        mintProofNFT(
+        uint256 proofTokenId = mintProofNFT(
             user,
             worker,
             collectionName,
@@ -178,9 +185,11 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
             earnedTokens,
             expires
         );
+        console.log("proofTokenId", proofTokenId);
 
         emit NewRental(
             tokenId,
+            proofTokenId,
             user,
             expires,
             collectionName,
@@ -193,7 +202,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
     function payAndSetUser(
         uint256 tokenId,
         address user,
-        address worker, // the worker
+        address payable worker, // the worker
         uint64 expires,
         string memory collectionName, // Linz
         string memory employerName, // Ars Electronica
@@ -207,15 +216,21 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         require(msg.value > 0, "No ETH sent");
 
         uint256 workedHours = calculateHoursDifference(expires);
+        
+        require(workedHours <= 8, "8 hrs is max");
         uint256 earnedTokens = earnableShiftTokenPerHour * workedHours;
+
+        console.log("workedHours ", workedHours);
+        console.log("earnedTokens ", earnedTokens);
 
         uint256 amountToPay = pricePerHour * workedHours;
         console.log("amountToPay ", amountToPay); // in wei
+        console.log("sent eth ", msg.value); // in wei
 
         // TODO check if correct amount was sent
-        // require(msg.value == amountToPay, "Not enough ETH sent");
+        require(msg.value >= amountToPay, "Not enough ETH sent");
 
-        // Check if user is already set and not expired
+        // Check if a user is already set and not expired
         require(
             _users[tokenId].user == address(0) ||
                 ((_users[tokenId].expires / 1000) < block.timestamp),
@@ -229,10 +244,11 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
         shiftToken.payoutTokens(user, earnedTokens);
 
         // payout 50% of rental fees to worker
-        // TODO
+        uint256 workerPayment = msg.value / 2;
+        worker.transfer(workerPayment);
 
         // mint proof to contract
-        mintProofNFT(
+        uint256 proofTokenId = mintProofNFT(
             user,
             worker,
             collectionName,
@@ -245,6 +261,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
 
         emit NewRental(
             tokenId,
+            proofTokenId,
             user,
             expires,
             collectionName,
@@ -268,7 +285,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
 
     function calculateHoursDifference(
         uint256 timestampInMilliseconds
-    ) public view returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 differenceInSeconds = timestampInMilliseconds /
             1000 -
             block.timestamp;
@@ -308,7 +325,7 @@ contract SHIFTRENTALS is ERC721Base, IERC4907 {
             super.supportsInterface(interfaceId);
     }
 
-    function etherToString(uint256 amount) public pure returns (string memory) {
+    function etherToString(uint256 amount) internal pure returns (string memory) {
         // Assuming the amount is in Wei
         uint256 eth = amount / 1e18;
         uint256 remainder = (amount - (eth * 1e18)) / 1e16; // Getting two decimal places
