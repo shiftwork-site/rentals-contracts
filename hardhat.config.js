@@ -18,11 +18,13 @@ module.exports = {
       allowUnlimitedContractSize: true,
       gas: 5000000, //units of gas you are willing to pay, aka gas limit
       gasPrice: 50000000000, //gas is typically in units of gwei, but you must enter it as wei here
+      allowUnlimitedContractSize: true,
+
     },
     mainnet: {
       url: process.env.ALCHEMY_HTTP,
       accounts: [process.env.MAINNET_PRIVATE_KEY],
-      gas: 350000000
+      gas: 350000000,
 
     }
   },

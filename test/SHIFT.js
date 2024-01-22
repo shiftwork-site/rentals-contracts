@@ -27,8 +27,8 @@ describe("SHIFT", async function () {
     const res = await erc20TokenContract.waitForDeployment();
     erc20TokenAddress = res.target;
 
-    rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTRENTALS');
-    rentablesContract = await hre.ethers.deployContract("SHIFTRENTALS", [addr1.address, addr1.address, 1, erc20TokenAddress, proofAddress], {});
+    rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTWEAR');
+    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, addr1.address, 1, erc20TokenAddress, proofAddress], {});
     const res2 = await rentablesContract.waitForDeployment();
     nftAddress = res2.target;
 
@@ -39,21 +39,21 @@ describe("SHIFT", async function () {
   });
 
   // ################# MANAGER / OWNER TESTS #################
-  it("should set manager RENTALS", async () => {
+  it("should set manager SHIFTWEAR", async () => {
     await rentablesContract.connect(addr1).setManager(addr2.address);
     expect(await rentablesContract.manager()).to.equal(addr2.address);
   });
 
-  it("should deny set manager RENTALS", async () => {
-    await expect(rentablesContract.connect(addr2).setManager(addr2.address)).to.be.revertedWith("Not owner or manager of SHIFTRENTALS");
+  it("should deny set manager SHIFTWEAR", async () => {
+    await expect(rentablesContract.connect(addr2).setManager(addr2.address)).to.be.revertedWith("Not owner or manager of SHIFTWEAR");
   });
 
-  it("should transfer Ownership By Owner RENTALS", async () => {
+  it("should transfer Ownership By Owner SHIFTWEAR", async () => {
     await rentablesContract.connect(addr1).transferOwnership(addr2.address);
     expect(await rentablesContract.owner()).to.equal(addr2.address);
   });
 
-  it("should deny transfer Ownership By Owner RENTALS", async () => {
+  it("should deny transfer Ownership By Owner SHIFTWEAR", async () => {
     await expect(rentablesContract.connect(addr2).transferOwnership(addr2.address)).to.be.reverted;
   });
 
@@ -98,27 +98,22 @@ describe("SHIFT", async function () {
     expect(await rentablesContract.tokenURI(0)).to.equal("ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
   });
 
-  it("should set user successfully, but expired date", async () => {
-    const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
-    await rentablesContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
-    await expect(rentablesContract.connect(addr1).payAndSetUser(0, addr4.address, addr3.address, "1698676372", "CollectionB", "EmployerB", "PlaceB", "WearableB"), { value: amountToSend }).to.be.revertedWith('Timestamp is in the past');
-    expect(await rentablesContract.ownerOf(0)).to.equal(addr1.address);
-    expect(await rentablesContract.userOf(0)).to.equal("0x0000000000000000000000000000000000000000");
-  });
 
-
-  it("should set user successfully, for future date", async () => {
-    const timestampInFutureMilliSeconds = 1731789462 * 1000;
-    const timestampInFuture = new Date(timestampInFutureMilliSeconds);
-    const now = new Date(Date.now());
-    const differenceInMilliseconds = timestampInFuture - now;
-    const differenceInHours = differenceInMilliseconds / (1000 * 60 * 60);
-    console.log({ differenceInHours })
-    const amountToSend = ethers.parseEther("0.03");  // e.g., 0.1 ETH
+  it("should set user successfully, for 4 hrs", async () => {
+    // const timestampInFutureMilliSeconds = 1705777200 * 1000;
+    // const timestampInFuture = new Date(timestampInFutureMilliSeconds);
+    // const now = new Date(Date.now());
+    // const differenceInMilliseconds = timestampInFuture - now;
+    // const differenceInHours = differenceInMilliseconds / (1000 * 60 * 60);
+    // console.log({ differenceInHours })
+    const amountToSend = ethers.parseEther("0.04");  // e.g., 0.1 ETH
     await rentablesContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
-    await rentablesContract.connect(addr1).payAndSetUser(0, addr4.address, addr3.address, 1703714400000, "CollectionB", "EmployerB", "PlaceB", "WearableB", { value: amountToSend });
+    await rentablesContract.connect(addr1).payAndSetUser(0, addr3.address, 4, "CollectionB", "EmployerB", "PlaceB", "WearableB", { value: amountToSend });
     expect(await rentablesContract.ownerOf(0)).to.equal(addr1.address);
-    expect(await rentablesContract.userOf(0)).to.equal(addr4.address);
+    console.log(await rentablesContract.userExpires(0))
+    console.log(await rentablesContract.userOf(0))
+    expect(await rentablesContract.userOf(0)).to.equal(addr1.address);
+    console.log(await proofContract.tokenApprovals(1));
   });
 
   // ################# TOKEN TESTS #################
@@ -132,6 +127,9 @@ describe("SHIFT", async function () {
     expect(await erc20TokenContract.RESERVED_FOR_OWNER_AND_MANAGER()).to.equal(expectedReservedForOwner);
     const expectedReservedForPaypouts = BigInt("7000000") * BigInt("1000000000000000000"); // 10000000 * 10 ** 18 as BigInt
     expect(await erc20TokenContract.RESERVED_FOR_PAYOUTS()).to.equal(expectedReservedForPaypouts);
+    // await erc20TokenContract.connect(addr1).withdraw(addr1, 5);
+    // const newBalance = ethers.formatEther(await erc20TokenContract.balanceOf(erc20TokenAddress))
+
 
   });
 
@@ -151,6 +149,13 @@ describe("SHIFT", async function () {
     const balance = ethers.formatEther(await erc20TokenContract.balanceOf(addr2))
     expect(balance).to.equal("40.0");
   });
+
+  it("should payout tokens to any user", async () => {
+    await erc20TokenContract.payoutTokens(addr2.address, 0)
+    const balance = ethers.formatEther(await erc20TokenContract.balanceOf(addr2))
+    expect(balance).to.equal("0.0");
+  });
+
 
   it("should deny payout tokens exceeding max payout", async () => {
     await expect(erc20TokenContract.connect(addr1).payoutTokens(addr3.address, 7000001)).to.be.revertedWith("No tokens left for payouts");
@@ -179,22 +184,7 @@ describe("SHIFT", async function () {
   });
 
   it("should mint from rentals", async () => {
-    const timestampInFutureMilliSeconds = 1731789462 * 1000;
-
-    const tx = await rentablesContract.mintProofNFT(
-      addr1.address,
-      addr2.address,
-      "Coll Test",
-      "Empl Test",
-      "Place Test",
-      "Wear Test",
-      30,
-      timestampInFutureMilliSeconds
-    );
-
-    await tx.wait();
-    // TODO get tokenID and check for "1"
-
+    // private so not callable
   });
 
   // ################# PROOF TESTS #################
@@ -202,32 +192,25 @@ describe("SHIFT", async function () {
   it("should mint two proofs and successfully transfer one, but fail on second", async () => {
     await proofContract.mint(
       addr1.address,
-      addr2.address,
-      "03 Sep 2023 14:12",
-      "03 Sep 2023",
-      "03 Sep 2023 15:12",
+      "17061156000",
+      "17061156000",
       "0.01 ETH",
       "Ars Electronica",
       "Linz",
       "POSTCITY",
       "Outis Nemo",
-      30,
-      "Geraldine Honauer"
+      30
     );
     await proofContract.mint(
       addr2.address,
-      addr2.address,
-      "03 Sep 2023 14:12",
-      "03 Sep 2023",
-      "03 Sep 2023 15:12",
+      "17061156000",
+      "17061156000",
       "0.01 ETH",
       "Ars Electronica",
       "Linz",
       "POSTCITY",
       "Outis Nemo",
-      30,
-      "Geraldine Honauer"
-    );
+      30);
     expect(await proofContract.tokenIdTracker()).to.equal("2");
     await proofContract.connect(addr1).claim(1);
     expect(await proofContract.ownerOf(1)).to.equal(addr1.address);

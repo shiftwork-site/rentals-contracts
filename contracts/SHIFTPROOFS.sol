@@ -4,11 +4,10 @@ pragma solidity ^0.8.0;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
-import "hardhat/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SHIFTPROOFS is Ownable, ERC721 {
-    mapping(uint256 => address) private _tokenApprovals;
+    mapping(uint256 => address) public tokenApprovals;
 
     event ProofOfRentMinted(uint256 tokenId);
 
@@ -16,7 +15,6 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
     address public manager;
 
-    // Global royalty settings
     address payable public globalRoyaltyRecipient;
     uint256 public globalRoyaltyPercentage = 10;
 
@@ -27,7 +25,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
     constructor(
         address initialOwner,
         address payable _royaltyRecipient
-    ) Ownable(initialOwner) ERC721("SHIFT PROOF OF RENTS", "SPR") {
+    ) Ownable(initialOwner) ERC721("PROOF OF SHIFTWORK", "SHP") {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         globalRoyaltyRecipient = _royaltyRecipient;
     }
@@ -44,49 +42,29 @@ contract SHIFTPROOFS is Ownable, ERC721 {
         allowedContract = _contract;
     }
 
-
     function setManager(address _manager) external ownerOrMgr {
         manager = _manager;
     }
 
-    function contractURI() external pure returns (string memory) {
-        string
-            memory json = '{"name": "PROOF OF SHIFTWORK", "description": "Welcome to PROOF OF SHIFTWORK! This NFT collection resembles the receipts issued by SHIFT acknowledging that a blockchain-entity has rented the digital twin workwear of an actual museum worker </>SHIFT WEAR</> and performed labor of value in the Metaverse in their name. SHIFT is a performance-based media artwork that critically reflects on structures of value. The project investigates human labor by entangling the physical with the digital realm and transcoding actual corporate workwear into yielding digital assets. Learn more: </>SHIFTWORK.CC</>"}';
-
-        return
-            string(
-                abi.encodePacked(
-                    "data:application/json;base64,",
-                    Base64.encode(bytes(json))
-                )
-            );
-    }
-
     function mint(
         address user,
-        address worker,
         string memory startRental,
-        string memory startRentalDate,
         string memory endRental,
         string memory rentalFee,
         string memory collection,
         string memory employer,
         string memory place,
         string memory wearable,
-        uint256 remuneration,
-        string memory artist
+        uint256 remuneration
     ) external returns (uint256) {
         require(
-            msg.sender == allowedContract || msg.sender == manager || msg.sender == owner(),
+            msg.sender == allowedContract ||
+                msg.sender == manager ||
+                msg.sender == owner(),
             "Not owner or manager or allowed contract to mint"
         );
         tokenIdTracker += 1;
         uint256 newTokenId = tokenIdTracker;
-
-        string memory stringifiedWorker = Strings.toHexString(
-            uint256(uint160(worker)),
-            20
-        );
 
         string memory stringifiedUser = Strings.toHexString(
             uint256(uint160(user)),
@@ -95,34 +73,30 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
         string memory svgBase64 = Base64.encode(
             abi.encodePacked(
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">',
-                '<text x="10" y="20">SHIFT Renter: ',
-                stringifiedUser,
+                '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="600" viewBox="0 0 300 600">',
+                "<style>",
+                'text { font-family: "monospace", sans-serif; }',
+                "</style>",
+                '<rect width="300" height="600" fill="white"/>'
+                '<text x="10" y="80">RENTER: ',
+                user,
                 "</text>",
-                '<text x="10" y="40">Performer: ',
-                stringifiedWorker,
-                "</text>",
-                '<text x="10" y="60">Start Rental: ',
-                startRental,
-                "</text>",
-                '<text x="10" y="80">End Rental: ',
-                endRental,
-                "</text>",
-                '<text x="10" y="100">Rental fee: ',
-                rentalFee,
-                "</text>",
-                '<text x="10" y="120">Collection: ',
-                collection,
-                "</text>",
-                '<text x="10" y="140">Wearable: ',
+                '<text x="10" y="110">WORKER: ',
                 wearable,
                 "</text>",
-                '<text x="10" y="160">Remuneration: ',
+                '<text x="10" y="140">UNIX TIME : ',
+                endRental,
+                "</text>",
+                '<text x="10" y="170">RENTAL FEE: ',
+                rentalFee,
+                "</text>",
+                '<text x="10" y="200">COLLECTION: ',
+                collection,
+                "</text>",
+                '<text x="10" y="230">REMUNERATION: ',
                 Strings.toString(remuneration),
                 " SHIFT </text>",
-                '<text x="10" y="180">Artist: ',
-                artist,
-                "</text>",
+                '<text x="10" y="260">ARTIST: Geraldine Honauer</text>',
                 "</svg>"
             )
         );
@@ -134,7 +108,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
                 collection,
                 '"},',
                 '{"trait_type":"DATE", "value":"',
-                startRentalDate,
+                startRental,
                 '"},',
                 '{"trait_type":"EMPLOYER", "value":"',
                 employer,
@@ -142,7 +116,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
                 '{"trait_type":"PLACE", "value":"',
                 place,
                 '"},',
-                '{"trait_type":"WORKWEAR", "value":"',
+                '{"trait_type":"WORKER", "value":"',
                 wearable,
                 '"},',
                 '{"trait_type":"RENTER", "value":"',
@@ -156,11 +130,11 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
         string memory description = string(
             abi.encodePacked(
-                "This on-chain generated NFT is proof that ",
+                "This on-chain generated proof-of-work NFT certifies that the renter ",
                 stringifiedUser,
-                " performed labor of value in the Metaverse by renting the digital twin workwear of ",
+                " has performed labor of value in the Metaverse wearing the digital twin of the uniform ",
                 wearable,
-                " during their shifts for ",
+                " wore during their shifts as a museum supervisor at ",
                 collection,
                 " at ",
                 place,
@@ -188,26 +162,26 @@ contract SHIFTPROOFS is Ownable, ERC721 {
         string memory finalUri = string(
             abi.encodePacked("data:application/json;base64,", json)
         );
-        console.log(finalUri);
         _tokenURIs[newTokenId] = finalUri;
 
         _mint(address(this), newTokenId);
-        _tokenApprovals[newTokenId] = user;
+        tokenApprovals[newTokenId] = user;
+
 
         emit ProofOfRentMinted(newTokenId);
 
         return newTokenId;
     }
 
-    function claim(uint256 tokenId) public {
+    function claim(uint256 tokenId) external {
         require(
-            _tokenApprovals[tokenId] == msg.sender,
+            tokenApprovals[tokenId] == msg.sender,
             "Caller not approved to claim this token"
         );
-        _approve(msg.sender, tokenId, address(this));
+        _approve(msg.sender, tokenId, address(this)); // needed?
         transferFrom(address(this), msg.sender, tokenId);
 
-        delete _tokenApprovals[tokenId];
+        delete tokenApprovals[tokenId];
     }
 
     function royaltyInfo(

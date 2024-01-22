@@ -15,7 +15,6 @@ contract SHIFTTOKEN is ERC20, Ownable {
         (MAX_SUPPLY * 20) / 100;
 
     address public manager;
-
     address public airdroppingContract;
 
     constructor(
@@ -46,17 +45,17 @@ contract SHIFTTOKEN is ERC20, Ownable {
     function withdraw(
         address payable recipient,
         uint256 amount
-    ) public ownerOrMgr {
+    ) external ownerOrMgr {
         uint256 formattedAmount = amount * 10 ** 18;
         require(
             formattedAmount <= balanceOf(address(this)),
             "Insufficient balance"
         );
         recipient.transfer(formattedAmount);
-        withdrawnAmount = withdrawnAmount + amount;
-    }
+        withdrawnAmount += amount;
+        }
 
-    function airdropTokens(address to, uint256 amount) public ownerOrMgr {
+    function airdropTokens(address to, uint256 amount) external ownerOrMgr {
         uint256 formattedAmount = amount * 10 ** 18;
 
         require(
@@ -80,6 +79,6 @@ contract SHIFTTOKEN is ERC20, Ownable {
         require(totalSupply() + formattedAmount <= MAX_SUPPLY, "Minting would exceed max supply");
 
         _mint(to, formattedAmount);
-        payoutAmount = payoutAmount + formattedAmount;
+        payoutAmount += formattedAmount;
     }
 }
