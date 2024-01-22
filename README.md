@@ -1,13 +1,26 @@
-# Sample Hardhat Project
+# Rental Contracts for SHIFT project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+How to deploy on testnet Holesky (or any other EVP compatible blockchain.):
 
 ```shell
 npx hardhat help
 npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
-npx hardhat run scripts/deploy.js
+npx hardhat run scripts/deploy.js --network holesky
 ```
+
+Verify contracts (enables readig/writing via etherscan):
+
+```shell
+npx hardhat verify --network holesky SHIFTWEAR_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ROYALTY_RECEIVER_ADDRESS 100 ERC20_CONTRACT_ADDRESS PROOF_CONTRACT_ADDRESS
+```
+
+```shell
+npx hardhat verify --network holesky ERC20_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS 
+```
+
+```shell
+npx hardhat verify --network holesky PROOF_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ROYALTY_RECEIVER_ADDRESS
+```
+
