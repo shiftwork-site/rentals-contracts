@@ -36,7 +36,6 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
     constructor(
         address initialOwner,
         address _royaltyRecipient,
-        uint128 _royaltyBps,
         address _shiftTokenAddress,
         address _shiftProofsAddress
     )
@@ -44,13 +43,13 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
             "SHIFT WEAR",
             "SHW",
             _royaltyRecipient,
-            _royaltyBps,
             initialOwner
         )
     {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         shiftToken = SHIFTTOKEN(_shiftTokenAddress); 
         shiftProofs = SHIFTPROOFS(_shiftProofsAddress); 
+        
     }
 
     function setManager(address _manager) external ownerOrMgr {
@@ -115,7 +114,6 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
 
         uint256 proofTokenId = shiftProofs.mint(
             user, // = renter
-            Strings.toString(block.timestamp),
             Strings.toString(expires),
             rentalFee,
             collectionName,

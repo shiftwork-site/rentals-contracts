@@ -8,6 +8,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SHIFTPROOFS is Ownable, ERC721 {
     mapping(uint256 => address) public tokenApprovals;
+    mapping(uint256 => uint256) private _startRentalTimestamps; // New mapping for start rental timestamps
 
     event ProofOfRentMinted(uint256 tokenId);
 
@@ -48,7 +49,6 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
     function mint(
         address user,
-        string memory startRental,
         string memory endRental,
         string memory rentalFee,
         string memory collection,
@@ -70,7 +70,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
             uint256(uint160(user)),
             20
         );
-
+        uint256 startRental = block.timestamp;
         string memory svgBase64 = Base64.encode(
             abi.encodePacked(
                 '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="600" viewBox="0 0 300 600">',
@@ -79,7 +79,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
                 "</style>",
                 '<rect width="300" height="600" fill="white"/>'
                 '<text x="10" y="80">RENTER: ',
-                user,
+                stringifiedUser,
                 "</text>",
                 '<text x="10" y="110">WORKER: ',
                 wearable,
@@ -108,7 +108,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
                 collection,
                 '"},',
                 '{"trait_type":"DATE", "value":"',
-                startRental,
+                Strings.toString(startRental),
                 '"},',
                 '{"trait_type":"EMPLOYER", "value":"',
                 employer,
@@ -166,7 +166,7 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
         _mint(address(this), newTokenId);
         tokenApprovals[newTokenId] = user;
-
+        _startRentalTimestamps[newTokenId] = startRental;
 
         emit ProofOfRentMinted(newTokenId);
 
@@ -174,6 +174,11 @@ contract SHIFTPROOFS is Ownable, ERC721 {
     }
 
     function claim(uint256 tokenId) external {
+        require(
+            block.timestamp <= _startRentalTimestamps[tokenId] + 7776000,
+            "Claim period exceeded 90 days after start rental"
+        );
+
         require(
             tokenApprovals[tokenId] == msg.sender,
             "Caller not approved to claim this token"

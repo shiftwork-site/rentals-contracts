@@ -28,7 +28,7 @@ describe("SHIFT", async function () {
     erc20TokenAddress = res.target;
 
     rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTWEAR');
-    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, addr1.address, 1, erc20TokenAddress, proofAddress], {});
+    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, addr1.address, erc20TokenAddress, proofAddress], {});
     const res2 = await rentablesContract.waitForDeployment();
     nftAddress = res2.target;
 
@@ -193,7 +193,6 @@ describe("SHIFT", async function () {
     await proofContract.mint(
       addr1.address,
       "17061156000",
-      "17061156000",
       "0.01 ETH",
       "Ars Electronica",
       "Linz",
@@ -203,7 +202,6 @@ describe("SHIFT", async function () {
     );
     await proofContract.mint(
       addr2.address,
-      "17061156000",
       "17061156000",
       "0.01 ETH",
       "Ars Electronica",
