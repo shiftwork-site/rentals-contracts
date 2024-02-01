@@ -33,7 +33,7 @@ contract SHIFTTOKEN is ERC20, Ownable {
         );
         _;
     }
-
+    
     function setAirdroppingContract(address _contract) external ownerOrMgr {
         airdroppingContract = _contract;
     }
@@ -51,7 +51,7 @@ contract SHIFTTOKEN is ERC20, Ownable {
             formattedAmount <= balanceOf(address(this)),
             "Insufficient balance"
         );
-        recipient.transfer(formattedAmount);
+        require(transfer(recipient, formattedAmount), "Token transfer failed");
         withdrawnAmount += amount;
         }
 

@@ -4,11 +4,8 @@ pragma solidity ^0.8.0;
 import {ERC721A} from "./ERC721A.sol";
 
 import "./ContractMetadata.sol";
-import "./Multicall.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Royalty.sol";
 import "./BatchMintMetadata.sol";
-
 import "../lib/TWStrings.sol";
 
 /**
@@ -31,9 +28,7 @@ import "../lib/TWStrings.sol";
 contract ERC721Base is
     ERC721A,
     ContractMetadata,
-    Multicall,
     Ownable,
-    Royalty,
     BatchMintMetadata
 {
     using TWStrings for uint256;
@@ -54,10 +49,8 @@ contract ERC721Base is
     constructor(
         string memory _name,
         string memory _symbol,
-        address _royaltyRecipient,
         address initialOwner
     ) Ownable(initialOwner) ERC721A(_name, _symbol) {
-        _setupDefaultRoyaltyInfo(_royaltyRecipient, 100);
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
     }
 
@@ -68,12 +61,11 @@ contract ERC721Base is
     /// @dev See ERC165: https://eips.ethereum.org/EIPS/eip-165
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC721A, IERC165) returns (bool) {
+    ) public view virtual override(ERC721A) returns (bool) {
         return
             interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
             interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
-            interfaceId == 0x5b5e139f || // ERC165 Interface ID for ERC721Metadata
-            interfaceId == type(IERC2981).interfaceId; // ERC165 ID for ERC2981
+            interfaceId == 0x5b5e139f; // ERC165 Interface ID for ERC721Metadata
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -176,16 +168,6 @@ contract ERC721Base is
         return msg.sender == owner();
     }
 
-    /// @dev Returns whether royalty info can be set in the given execution context.
-    function _canSetRoyaltyInfo()
-        internal
-        view
-        virtual
-        override
-        returns (bool)
-    {
-        return msg.sender == owner();
-    }
 
     function _msgSender()
         internal

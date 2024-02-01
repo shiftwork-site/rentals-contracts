@@ -35,14 +35,12 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
 
     constructor(
         address initialOwner,
-        address _royaltyRecipient,
         address _shiftTokenAddress,
         address _shiftProofsAddress
     )
         ERC721Base(
             "SHIFT WEAR",
             "SHW",
-            _royaltyRecipient,
             initialOwner
         )
     {
@@ -83,8 +81,8 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
         string memory placeName, 
         string memory wearableName
     ) external payable {
-        uint256 expires = block.timestamp + (userHours * 1 hours);
-
+        uint256 expires = (block.timestamp * 1000) + (userHours * 1 hours * 1000);
+        
         require(msg.value > 0, "No ETH sent");
 
         address user = msg.sender;
@@ -114,7 +112,7 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
 
         uint256 proofTokenId = shiftProofs.mint(
             user, // = renter
-            Strings.toString(expires),
+            Strings.toString(expires / 1000),
             rentalFee,
             collectionName,
             employerName,
@@ -136,14 +134,13 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
     }
 
     function userOf(uint256 tokenId) external view virtual returns (address) {
-        if ((uint256(_users[tokenId].expires)) >= block.timestamp) {
+        if ((uint256(_users[tokenId].expires / 1000)) >= block.timestamp) {
             return _users[tokenId].user;
         } else {
             return address(0);
         }
     }
 
-    // TODO test
     function withdraw(
         address payable recipient,
         uint256 amount

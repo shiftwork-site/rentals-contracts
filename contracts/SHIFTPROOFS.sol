@@ -5,8 +5,9 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 
-contract SHIFTPROOFS is Ownable, ERC721 {
+contract SHIFTPROOFS is Ownable, ERC721, ERC721Royalty {
     mapping(uint256 => address) public tokenApprovals;
     mapping(uint256 => uint256) private _startRentalTimestamps; // New mapping for start rental timestamps
 
@@ -16,8 +17,6 @@ contract SHIFTPROOFS is Ownable, ERC721 {
 
     address public manager;
 
-    address payable public globalRoyaltyRecipient;
-    uint256 public globalRoyaltyPercentage = 10;
 
     address public allowedContract;
 
@@ -26,9 +25,14 @@ contract SHIFTPROOFS is Ownable, ERC721 {
     constructor(
         address initialOwner,
         address payable _royaltyRecipient
-    ) Ownable(initialOwner) ERC721("PROOF OF SHIFTWORK", "SHP") {
+    )
+        Ownable(initialOwner)
+        ERC721("PROOF OF SHIFTWORK", "SHP")
+        ERC721Royalty()
+    {
+          _setDefaultRoyalty(_royaltyRecipient, 1000);
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
-        globalRoyaltyRecipient = _royaltyRecipient;
+
     }
 
     modifier ownerOrMgr() {
@@ -183,22 +187,24 @@ contract SHIFTPROOFS is Ownable, ERC721 {
             tokenApprovals[tokenId] == msg.sender,
             "Caller not approved to claim this token"
         );
-        _approve(msg.sender, tokenId, address(this)); // needed?
+        _approve(msg.sender, tokenId, address(this));
         transferFrom(address(this), msg.sender, tokenId);
 
         delete tokenApprovals[tokenId];
-    }
-
-    function royaltyInfo(
-        uint256 salePrice
-    ) external view returns (address receiver, uint256 royaltyAmount) {
-        royaltyAmount = (salePrice * globalRoyaltyPercentage) / 10000;
-        return (globalRoyaltyRecipient, royaltyAmount);
     }
 
     function tokenURI(
         uint256 tokenId
     ) public view override(ERC721) returns (string memory) {
         return _tokenURIs[tokenId];
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721, ERC721Royalty) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }

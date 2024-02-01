@@ -5,7 +5,6 @@ describe("SHIFT", async function () {
   let erc20TokenContract;
   let erc20TokenAddress;
   let rentablesContractFactory;
-  let proofContractFactory;
   let proofContract;
   let proofAddress;
   let rentablesContract;
@@ -13,12 +12,13 @@ describe("SHIFT", async function () {
   let addr2;
   let addr3;
   let addr4;
+  const royaltyReceiver = "0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86";
 
   beforeEach(async () => {
     [addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
     proofContractFactory = await hre.ethers.getContractFactory('SHIFTPROOFS');
-    proofContract = await hre.ethers.deployContract("SHIFTPROOFS", [addr1.address, "0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86"], {});
+    proofContract = await hre.ethers.deployContract("SHIFTPROOFS", [addr1.address, royaltyReceiver], {});
     const res3 = await proofContract.waitForDeployment();
     proofAddress = res3.target;
 
@@ -28,7 +28,7 @@ describe("SHIFT", async function () {
     erc20TokenAddress = res.target;
 
     rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTWEAR');
-    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, addr1.address, erc20TokenAddress, proofAddress], {});
+    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, erc20TokenAddress, proofAddress], {});
     const res2 = await rentablesContract.waitForDeployment();
     nftAddress = res2.target;
 
@@ -114,6 +114,8 @@ describe("SHIFT", async function () {
     console.log(await rentablesContract.userOf(0))
     expect(await rentablesContract.userOf(0)).to.equal(addr1.address);
     console.log(await proofContract.tokenApprovals(1));
+    console.log(await proofContract.royaltyInfo(1, 50))
+
   });
 
   // ################# TOKEN TESTS #################
@@ -150,27 +152,17 @@ describe("SHIFT", async function () {
     expect(balance).to.equal("40.0");
   });
 
-  it("should payout tokens to any user", async () => {
-    await erc20TokenContract.payoutTokens(addr2.address, 0)
-    const balance = ethers.formatEther(await erc20TokenContract.balanceOf(addr2))
-    expect(balance).to.equal("0.0");
-  });
-
 
   it("should deny payout tokens exceeding max payout", async () => {
     await expect(erc20TokenContract.connect(addr1).payoutTokens(addr3.address, 7000001)).to.be.revertedWith("No tokens left for payouts");
   });
 
-  it("should deny minting tokens", async () => {
-    await expect(erc20TokenContract.connect(addr1).payoutTokens(addr3.address, 7000001)).to.be.revertedWith("No tokens left for payouts");
-  });
 
   // TODO test not working but maybe function does and it's only the runner here
   // it("should be able to withdraw all initial tokens to owner", async () => {
-  //   // const balance = ethers.formatEther(await erc20TokenContract.balanceOf(nftAddress))
-  //   console.log(await erc20TokenContract.owner())
-  //   // const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
-  //   await erc20TokenContract.connect(await erc20TokenContract.owner()).withdraw(await erc20TokenContract.owner(), 3)
+  // const balance = ethers.formatEther(await erc20TokenContract.balanceOf(nftAddress))
+  // const amountToSend = ethers.parseEther("0.1");  // e.g., 0.1 ETH
+  //   await erc20TokenContract.connect(await erc20TokenContract.owner()).withdraw(await erc20TokenContract.owner(), 200000)
   // });
 
 

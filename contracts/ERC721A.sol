@@ -274,7 +274,7 @@ contract ERC721A is Context, ERC165, IERC721A {
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public virtual override {
+    ) public virtual {
         _transfer(from, to, tokenId);
         if (to.isContract())
             if (!_checkContractOnERC721Received(from, to, tokenId, _data)) {

@@ -39,7 +39,6 @@ async function main() {
     "SHIFTWEAR",
     [
       "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", // initial owner
-      "0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86", // _royaltyRecipient
       erc20TokenAddress, //_shiftTokenAddress
       proofAddress,
     ], //_shiftProofsAddress
