@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
+
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -19,7 +20,7 @@ contract SHIFTTOKEN is ERC20, Ownable {
 
     constructor(
         address initialOwner
-    ) Ownable(initialOwner) ERC20("SHIFT", "SHIFT") {
+    ) Ownable(initialOwner) ERC20("SHIFT TOKEN", "SHIFT") {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         _mint(address(this), RESERVED_FOR_OWNER_AND_MANAGER);
         _mint(owner(), 1 * 10 ** 18); // withdrawals only allowed for wallets with at least 1 token

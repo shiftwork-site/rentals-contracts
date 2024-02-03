@@ -12,7 +12,7 @@ async function main() {
 
 
   const proofContract = await hre.ethers.deployContract(
-    "SHIFTPROOFS",
+    "SHIFTPROOF",
     [
       "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", // initial owner
       "0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86", // _royaltyRecipient
@@ -36,7 +36,7 @@ async function main() {
 
   // const tempErc20 = "0x28D4Ec0d785076E43371B0F454111e98e4890D68";
   const nftContract = await hre.ethers.deployContract(
-    "SHIFTWEAR",
+    "SHIFTWORK",
     [
       "0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22", // initial owner
       erc20TokenAddress, //_shiftTokenAddress

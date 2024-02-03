@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "./ERC721Base.sol";
 import "./interface/IERC4907.sol";
 import "./SHIFTTOKEN.sol";
-import "./SHIFTPROOFS.sol";
+import "./SHIFTPROOF.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract SHIFTWEAR is ERC721Base, IERC4907 {
+contract SHIFTWORK is ERC721Base, IERC4907 {
     using Strings for uint256;
 
     struct UserInfo {
@@ -19,7 +19,7 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
     uint256 public earnableShiftTokenPerHour = 30;
 
     SHIFTTOKEN public shiftToken;
-    SHIFTPROOFS public shiftProofs;
+    SHIFTPROOF public shiftProofs;
 
     event NewRental(
         uint256 tokenId,
@@ -39,14 +39,14 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
         address _shiftProofsAddress
     )
         ERC721Base(
-            "SHIFT WEAR",
+            "SHIFT WORK",
             "SHW",
             initialOwner
         )
     {
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
         shiftToken = SHIFTTOKEN(_shiftTokenAddress); 
-        shiftProofs = SHIFTPROOFS(_shiftProofsAddress); 
+        shiftProofs = SHIFTPROOF(_shiftProofsAddress); 
         
     }
 
@@ -107,13 +107,12 @@ contract SHIFTWEAR is ERC721Base, IERC4907 {
         uint256 workerPayment = msg.value / 2;
         worker.transfer(workerPayment);
 
-       string memory rentalFee = etherToString(pricePerHour);
         uint256 remuneration = earnedTokens;
 
         uint256 proofTokenId = shiftProofs.mint(
+            worker,
             user, // = renter
             Strings.toString(expires / 1000),
-            rentalFee,
             collectionName,
             employerName,
             placeName,

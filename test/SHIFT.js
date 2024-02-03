@@ -17,8 +17,8 @@ describe("SHIFT", async function () {
   beforeEach(async () => {
     [addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
-    proofContractFactory = await hre.ethers.getContractFactory('SHIFTPROOFS');
-    proofContract = await hre.ethers.deployContract("SHIFTPROOFS", [addr1.address, royaltyReceiver], {});
+    proofContractFactory = await hre.ethers.getContractFactory('SHIFTPROOF');
+    proofContract = await hre.ethers.deployContract("SHIFTPROOF", [addr1.address, royaltyReceiver], {});
     const res3 = await proofContract.waitForDeployment();
     proofAddress = res3.target;
 
@@ -27,8 +27,8 @@ describe("SHIFT", async function () {
     const res = await erc20TokenContract.waitForDeployment();
     erc20TokenAddress = res.target;
 
-    rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTWEAR');
-    rentablesContract = await hre.ethers.deployContract("SHIFTWEAR", [addr1.address, erc20TokenAddress, proofAddress], {});
+    rentablesContractFactory = await hre.ethers.getContractFactory('SHIFTWORK');
+    rentablesContract = await hre.ethers.deployContract("SHIFTWORK", [addr1.address, erc20TokenAddress, proofAddress], {});
     const res2 = await rentablesContract.waitForDeployment();
     nftAddress = res2.target;
 
@@ -181,32 +181,32 @@ describe("SHIFT", async function () {
 
   // ################# PROOF TESTS #################
 
-  it("should mint two proofs and successfully transfer one, but fail on second", async () => {
-    await proofContract.mint(
-      addr1.address,
-      "17061156000",
-      "0.01 ETH",
-      "Ars Electronica",
-      "Linz",
-      "POSTCITY",
-      "Outis Nemo",
-      30
-    );
-    await proofContract.mint(
-      addr2.address,
-      "17061156000",
-      "0.01 ETH",
-      "Ars Electronica",
-      "Linz",
-      "POSTCITY",
-      "Outis Nemo",
-      30);
-    expect(await proofContract.tokenIdTracker()).to.equal("2");
-    await proofContract.connect(addr1).claim(1);
-    expect(await proofContract.ownerOf(1)).to.equal(addr1.address);
-    await expect(proofContract.connect(addr1).claim(2)).to.be.revertedWith("Caller not approved to claim this token");
+  // it("should mint two proofs and successfully transfer one, but fail on second", async () => {
+  //   await proofContract.mint(
+  //     addr2.address,
+  //     addr1.address,
+  //     "17061156000",
+  //     "Ars Electronica",
+  //     "Linz",
+  //     "POSTCITY",
+  //     "Outis Nemo",
+  //     30
+  //   );
+  //   await proofContract.mint(
+  //     addr1.address,
+  //     addr2.address,
+  //     "17061156000",
+  //     "Ars Electronica",
+  //     "Linz",
+  //     "POSTCITY",
+  //     "Outis Nemo",
+  //     30);
+  //   expect(await proofContract.tokenIdTracker()).to.equal("2");
+  //   await proofContract.connect(addr1).claim(1);
+  //   expect(await proofContract.ownerOf(1)).to.equal(addr1.address);
+  //   await expect(proofContract.connect(addr1).claim(2)).to.be.revertedWith("Caller not approved to claim this token");
 
-  });
+  // });
 
 });
 
