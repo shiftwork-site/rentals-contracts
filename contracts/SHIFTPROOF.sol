@@ -7,8 +7,11 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "hardhat/console.sol";
+import "./DateTime.sol";
 
 contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
+    using Strings for uint256;
+
     mapping(uint256 => address) public tokenApprovals;
     mapping(uint256 => uint256) private _startRentalTimestamps;
 
@@ -25,11 +28,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
     constructor(
         address initialOwner,
         address payable _royaltyRecipient
-    )
-        Ownable(initialOwner)
-        ERC721("SHIFT PROOF", "SHP")
-        ERC721Royalty()
-    {
+    ) Ownable(initialOwner) ERC721("SHIFT PROOF", "SHP") ERC721Royalty() {
         _setDefaultRoyalty(_royaltyRecipient, 1000);
         manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
     }
@@ -55,7 +54,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
     ) internal pure returns (string memory) {
         bytes memory b = new bytes(remuneration);
         for (uint i = 0; i < remuneration; i++) {
-            b[i] = "I"; 
+            b[i] = "I";
         }
         return string(b);
     }
@@ -91,47 +90,57 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
         uint256 startRental = block.timestamp;
         string memory startRentalStr = Strings.toString(startRental);
 
+        (
+            uint256 startYear,
+            uint256 startMonth,
+            uint256 startDay,
+            uint256 startHour,
+            uint256 startMinute,
+            uint256 startSecond
+        ) = DateTime.timestampToDateTime(startRental);
+
+        string memory startRentalDate = formatDateTime(
+            startYear,
+            startMonth,
+            startDay,
+            startHour,
+            startMinute,
+            true
+        );
+
         string memory iString = generateIString(remuneration);
 
-string memory svgBase64 = Base64.encode(
-    abi.encodePacked(
-        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000" xmlns:v="https://vecta.io/nano">',
-        "<style><![CDATA[",
-        "text{transform-origin:center; font-family:Arial; font-size:3.5rem; fill:black;}",  
-        "@keyframes rotate { to { transform: rotate(360deg); } }", 
-        ".rotate { animation: rotate 90000ms linear infinite; }", 
-        "]]></style>",
-        "<defs>",
-        '<path id="A" d="M75 500a425 425 0 0 1 850 0 425 425 0 0 1-850 0"/>',
-        '<path id="B" d="M125 500a375 375 0 0 1 750 0 375 375 0 0 1-750 0"/>',
-        '<path id="C" d="M175 500a325 325 0 0 1 650 0 325 325 0 0 1-650 0"/>',
-        '<path id="D" d="M225 500a275 275 0 0 1 550 0 275 275 0 0 1-550 0"/>',
-        "</defs>",
-        '<text><textPath xlink:href="#A">', 
-        iString,
-        "</textPath></text>",
-        '<text><textPath xlink:href="#B">', 
-        startRentalStr,
-        " - ",
-        endRental,
-        "</textPath></text>",
-        '<text><textPath xlink:href="#C">', 
-        stringifiedUser,
-        "</textPath></text>",
-        '<text><textPath xlink:href="#D">', 
-        stringifiedWorker,
-        "</textPath></text>",
-        '<text class="rotate" x="50%" y="55%" text-anchor="middle" font-size="6.5rem" fill="#000" font-weight="bold">SHIFT</text>',
-        "</svg>"
-    )
-);     string memory attributes = string(
+        string memory svgBase64 = Base64.encode(
+            abi.encodePacked(
+                '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000" xmlns:v="https://vecta.io/nano"><style><![CDATA[text{transform-origin:center}.A{animation:spin 180000ms linear infinite}.B{animation:spin 150000ms linear infinite}.C{animation:spin 120000ms linear infinite}.D{animation:spin 210000ms linear infinite}.E{animation:spin 90000ms linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.F{font-family:Arial}.G{font-size:3.5rem}]]></style><defs><path id="A" d="M75 500a425 425 0 0 1 850 0 425 425 0 0 1-850 0"/><path id="B" d="M125 500a375 375 0 0 1 750 0 375 375 0 0 1-750 0"/><path id="C" d="M175 500a325 325 0 0 1 650 0 325 325 0 0 1-650 0"/><path id="D" d="M225 500a275 275 0 0 1 550 0 275 275 0 0 1-550 0"/></defs>',
+                '<text class="A F G" fill="#170652"><textPath xlink:href="#A">',
+                iString,
+                '</textPath></text><text class="B F G" fill="#f18621"><textPath xlink:href="#B">',
+                startRentalStr,
+                " - ",
+                endRental,
+                '</textPath></text><text class="C F G" fill="#',
+                getFirst6Digits(user),
+                '"><textPath xlink:href="#C">',
+                stringifiedUser,
+                '</textPath></text><text class="D F G" fill="#',
+                getFirst6Digits(worker),
+                '"><textPath xlink:href="#D">',
+                stringifiedWorker,
+                '</textPath></text><text class="E F" x="50%" y="55%" text-anchor="middle" font-size="6.5rem" fill="#',
+                getFirst6Digits(address(this)), 
+                '" font-weight="bold">SHIFT</text></svg>'
+            )
+        );
+
+        string memory attributes = string(
             abi.encodePacked(
                 '", "attributes":[',
                 '{"trait_type":"COLLECTION", "value":"',
                 collection,
                 '"},',
                 '{"trait_type":"DATE", "value":"',
-                startRentalStr,
+                startRentalDate,
                 '"},',
                 '{"trait_type":"EMPLOYER", "value":"',
                 employer,
@@ -141,7 +150,7 @@ string memory svgBase64 = Base64.encode(
                 '"},',
                 '{"trait_type":"WORKER", "value":"',
                 wearable,
-                '"},',
+                '"}',
                 "]"
             )
         );
@@ -150,11 +159,11 @@ string memory svgBase64 = Base64.encode(
 
         string memory description = string(
             abi.encodePacked(
-                "This on-chain generated proof-of-work NFT certifies that the renter ",
+                "This on-chain generated proof-of-work NFT certfifies that ",
                 stringifiedUser,
-                " has performed labor of value in the METAVERSE wearing the digital twin of the uniform ",
+                " has performed labor of value in the Metaverse by wearing the digital twin of the uniform ",
                 wearable,
-                " wore during their shifts as a museum supervisor at ",
+                " performed during their shifts as a museum supervisor at ",
                 collection,
                 "."
             )
@@ -210,6 +219,87 @@ string memory svgBase64 = Base64.encode(
         uint256 tokenId
     ) public view override(ERC721) returns (string memory) {
         return _tokenURIs[tokenId];
+    }
+
+    function byteToHexChar(bytes1 b) internal pure returns (string memory) {
+        bytes memory hexChars = "0123456789abcdef";
+        // Extracting the top and bottom half of the byte
+        bytes memory result = new bytes(2);
+        result[0] = hexChars[uint8(b) >> 4];
+        result[1] = hexChars[uint8(b) & 0x0f];
+        return string(result);
+    }
+
+
+    function getFirst6Digits(address _addr) public pure returns (string memory) {
+        bytes3 firstThreeBytes = bytes3(bytes20(_addr));
+        // Convert each of the first 3 bytes to a hexadecimal string
+        string memory hexStr = string(abi.encodePacked(
+            byteToHexChar(firstThreeBytes[0]),
+            byteToHexChar(firstThreeBytes[1]),
+            byteToHexChar(firstThreeBytes[2])
+        ));
+        return hexStr;
+    }
+
+    function monthToString(
+        uint256 _month
+    ) internal pure returns (string memory) {
+        string[12] memory months = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
+        ];
+        return months[_month - 1];
+    }
+
+    function formatDateTime(
+        uint256 year,
+        uint256 month,
+        uint256 day,
+        uint256 hour,
+        uint256 minute,
+        bool withoutTime
+    ) internal pure returns (string memory) {
+        string memory yearStr = year.toString();
+        string memory monthStr = monthToString(month);
+        string memory dayStr = day < 10
+            ? string(abi.encodePacked("0", day.toString()))
+            : day.toString();
+        string memory hourStr = hour < 10
+            ? string(abi.encodePacked("0", hour.toString()))
+            : hour.toString();
+        string memory minuteStr = minute < 10
+            ? string(abi.encodePacked("0", minute.toString()))
+            : minute.toString();
+
+        if (withoutTime) {
+            return
+                string(abi.encodePacked(dayStr, " ", monthStr, " ", yearStr));
+        }
+        return
+            string(
+                abi.encodePacked(
+                    dayStr,
+                    " ",
+                    monthStr,
+                    " ",
+                    yearStr,
+                    " ",
+                    hourStr,
+                    ":",
+                    minuteStr
+                )
+            );
     }
 
     /**
