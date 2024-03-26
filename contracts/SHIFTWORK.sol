@@ -16,7 +16,7 @@ contract SHIFTWORK is ERC721Base, IERC4907 {
     }
     mapping(uint256 => UserInfo) internal _users;
     uint256 public pricePerHour = 0.01 ether;
-    uint256 public earnableShiftTokenPerHour = 30;
+    uint256 public earnableShiftTokenPerHour = 23;
 
     SHIFTTOKEN private shiftToken;
     SHIFTPROOF private shiftProofs;

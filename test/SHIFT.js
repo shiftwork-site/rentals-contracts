@@ -118,6 +118,14 @@ describe("SHIFT", async function () {
 
   });
 
+  it("should set user successfully, for 8 hrs", async () => {
+    const amountToSend = ethers.parseEther("0.08");  // e.g., 0.1 ETH
+    await rentablesContract.mintTo(1, addr1.address, "ipfs://bafyreihwscghzdv7wiqrgbyecdik4pztnp57h47rj66yhg5h3z264pegiy/metadata.json");
+    await rentablesContract.connect(addr1).payAndSetUser(0, addr3.address, 8, "CollectionB", "EmployerB", "PlaceB", "WearableB", { value: amountToSend });
+    expect(await rentablesContract.ownerOf(0)).to.equal(addr1.address);
+  });
+
+
   // ################# TOKEN TESTS #################
 
   it("should have initial token minted to contract", async () => {

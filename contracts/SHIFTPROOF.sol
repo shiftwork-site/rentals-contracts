@@ -108,17 +108,18 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
             true
         );
 
+  
         string memory iString = generateIString(remuneration);
 
         string memory svgBase64 = Base64.encode(
             abi.encodePacked(
-                '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000" xmlns:v="https://vecta.io/nano"><style><![CDATA[text{transform-origin:center}.A{animation:spin 180000ms linear infinite}.B{animation:spin 150000ms linear infinite}.C{animation:spin 120000ms linear infinite}.D{animation:spin 210000ms linear infinite}.E{animation:spin 90000ms linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.F{font-family:Arial}.G{font-size:3.5rem}]]></style><defs><path id="A" d="M75 500a425 425 0 0 1 850 0 425 425 0 0 1-850 0"/><path id="B" d="M125 500a375 375 0 0 1 750 0 375 375 0 0 1-750 0"/><path id="C" d="M175 500a325 325 0 0 1 650 0 325 325 0 0 1-650 0"/><path id="D" d="M225 500a275 275 0 0 1 550 0 275 275 0 0 1-550 0"/></defs>',
-                '<text class="A F G" fill="#170652"><textPath xlink:href="#A">',
+                '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><style><![CDATA[text{transform-origin:center}.A{animation:spin 180000ms linear infinite}.B{animation:spin 150000ms linear infinite}.C{animation:spin 120000ms linear infinite}.D{animation:spin 210000ms linear infinite}.E{animation:spin 90000ms linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.F{font-family:Arial}.G{font-size:3.5rem}]]></style><defs><path id="A" d="M75 500a425 425 0 0 1 850 0 425 425 0 0 1-850 0"/><path id="B" d="M125 500a375 375 0 0 1 750 0 375 375 0 0 1-750 0"/><path id="C" d="M175 500a325 325 0 0 1 650 0 325 325 0 0 1-650 0"/><path id="D" d="M225 500a275 275 0 0 1 550 0 275 275 0 0 1-550 0"/></defs>',
+                '<text class="A F G" fill="#333333"><textPath xlink:href="#A">',
                 iString,
-                '</textPath></text><text class="B F G" fill="#f18621"><textPath xlink:href="#B">',
+                '</textPath></text><text class="B F G" fill="#', getFirstSixLetters(startRentalStr),'"><textPath xlink:href="#B">',
                 startRentalStr,
-                " - ",
-                endRental,
+                " - ", 
+               '</textPath></text><text class="B F G" x="355" fill="#', getFirstSixLetters(endRental),'"><textPath xlink:href="#B">', endRental,
                 '</textPath></text><text class="C F G" fill="#',
                 getFirst6Digits(user),
                 '"><textPath xlink:href="#C">',
@@ -227,6 +228,18 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
         bytes memory result = new bytes(2);
         result[0] = hexChars[uint8(b) >> 4];
         result[1] = hexChars[uint8(b) & 0x0f];
+        return string(result);
+    }
+
+  function getFirstSixLetters(string memory _str) public pure returns (string memory) {
+        bytes memory strBytes = bytes(_str);
+        require(strBytes.length >= 6, "String is too short");
+
+        bytes memory result = new bytes(6);
+        for (uint i = 0; i < 6; i++) {
+            result[i] = strBytes[i];
+        }
+        
         return string(result);
     }
 

@@ -4,7 +4,7 @@ require("hardhat-contract-sizer");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 require("@nomicfoundation/hardhat-chai-matchers");
-require("@nomiclabs/hardhat-etherscan");
+require("@nomicfoundation/hardhat-verify");
 
 const dotenv = require("dotenv");
 dotenv.config();
@@ -33,6 +33,13 @@ module.exports = {
       gas: 50000000000, //units of gas you are willing to pay, aka gas limit
       gasPrice: 50000000000, //gas is typically in units of gwei, but you must enter it as wei here
 
+    },
+    polygonMumbai: {
+      url: "https://polygon-mumbai-pokt.nodies.app",
+      accounts: [process.env.TESTNET_PRIVATE_KEY],
+      allowUnlimitedContractSize: true,
+      gas: 50000000000, //units of gas you are willing to pay, aka gas limit
+      gasPrice: 50000000000, //gas is typically in units of gwei, but you must enter it as wei here
     },
     optimism: {
       url: "https://mainnet.optimism.io",
@@ -64,7 +71,8 @@ module.exports = {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
       mainnet: process.env.ETHERSCAN_API_KEY,
-      "optimism-sepolia": process.env.OP_ETHERSCAN_API_KEY
+      "optimism-sepolia": process.env.OP_ETHERSCAN_API_KEY,
+      polygonMumbai: process.env.ETHERSCAN_MUMBAI_API_KEY
     },
     customChains: [
       {
