@@ -114,7 +114,8 @@ describe("SHIFT", async function () {
     console.log(await rentablesContract.userOf(0))
     expect(await rentablesContract.userOf(0)).to.equal(addr1.address);
     console.log(await proofContract.tokenApprovals(1));
-    console.log(await proofContract.royaltyInfo(1, 50))
+    console.log(await proofContract.royaltyInfo(1, 50));
+    console.log(await proofContract.tokenURI(0));
 
   });
 

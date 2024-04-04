@@ -162,10 +162,10 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
             abi.encodePacked(
                 "This on-chain generated proof-of-work NFT certfifies that ",
                 stringifiedUser,
-                " has performed labor of value in the Metaverse by wearing the digital twin of the uniform ",
+                " has conducted labor of value in the Metaverse by performing the digital twin of the uniform ",
                 wearable,
                 " performed during their shifts as a museum supervisor at ",
-                collection,
+                employer,
                 "."
             )
         );
