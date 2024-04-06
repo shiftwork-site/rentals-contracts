@@ -90,6 +90,13 @@ contract ERC721Base is
         return string(abi.encodePacked(batchUri, _tokenId.toString()));
     }
 
+    // Function to set the token URI for a specific token ID
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner {
+        require(_canMint(), "Not allowed to set Token URI.");
+        fullURI[tokenId] = _tokenURI;
+    }
+
+
     /*//////////////////////////////////////////////////////////////
                             Minting logic
     //////////////////////////////////////////////////////////////*/
