@@ -21,7 +21,7 @@ contract SHIFTTOKEN is ERC20, Ownable {
     constructor(
         address initialOwner
     ) Ownable(initialOwner) ERC20("SHIFT TOKEN", "SHIFT") {
-        manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
+        manager = 0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86;
         _mint(address(this), RESERVED_FOR_OWNER_AND_MANAGER);
         _mint(owner(), 1 * 10 ** 18); // withdrawals only allowed for wallets with at least 1 token
         _mint(manager, 1 * 10 ** 18); // withdrawals only allowed for wallets with at least 1 token

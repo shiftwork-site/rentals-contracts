@@ -30,7 +30,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
         address payable _royaltyRecipient
     ) Ownable(initialOwner) ERC721("SHIFT PROOF", "SHP") ERC721Royalty() {
         _setDefaultRoyalty(_royaltyRecipient, 1000);
-        manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
+        manager = 0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86;
     }
 
     modifier ownerOrMgr() {
@@ -114,7 +114,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
         string memory svgBase64 = Base64.encode(
             abi.encodePacked(
                 '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><style><![CDATA[text{transform-origin:center}.A{animation:spin 180000ms linear infinite}.B{animation:spin 150000ms linear infinite}.C{animation:spin 120000ms linear infinite}.D{animation:spin 210000ms linear infinite}.E{animation:spin 90000ms linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.F{font-family:Arial}.G{font-size:3.5rem}]]></style><defs><path id="A" d="M75 500a425 425 0 0 1 850 0 425 425 0 0 1-850 0"/><path id="B" d="M125 500a375 375 0 0 1 750 0 375 375 0 0 1-750 0"/><path id="C" d="M175 500a325 325 0 0 1 650 0 325 325 0 0 1-650 0"/><path id="D" d="M225 500a275 275 0 0 1 550 0 275 275 0 0 1-550 0"/></defs>',
-                '<text class="A F G" fill="#333333"><textPath xlink:href="#A">',
+                '<text class="A F G" fill="#1c1c1c"><textPath xlink:href="#A">',
                 iString,
                 '</textPath></text><text class="B F G" fill="#', getFirstSixLetters(startRentalStr),'"><textPath xlink:href="#B">',
                 startRentalStr,
@@ -128,9 +128,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
                 getFirst6Digits(worker),
                 '"><textPath xlink:href="#D">',
                 stringifiedWorker,
-                '</textPath></text><text class="E F" x="50%" y="55%" text-anchor="middle" font-size="6.5rem" fill="#',
-                getFirst6Digits(address(this)), 
-                '" font-weight="bold">SHIFT</text></svg>'
+                '</textPath></text><text class="E F" x="50%" y="55%" text-anchor="middle" font-size="6.5rem" fill="#1c1c1c" font-weight="bold">SHIFT</text></svg>'
             )
         );
 
@@ -156,7 +154,7 @@ contract SHIFTPROOF is Ownable, ERC721, ERC721Royalty {
             )
         );
 
-        string memory name = string(abi.encodePacked(wearable, " SHIFT WORK"));
+        string memory name = string(abi.encodePacked(wearable, " SHIFT PROOF"));
 
         string memory description = string(
             abi.encodePacked(

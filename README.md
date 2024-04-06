@@ -13,14 +13,14 @@ npx hardhat run scripts/deploy.js --network sepolia
 Verify contracts (enables readig/writing via etherscan):
 
 ```shell
-npx hardhat verify --network sepolia SHIFTWEAR_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ERC20_CONTRACT_ADDRESS PROOF_CONTRACT_ADDRESS
+npx hardhat verify --network polygonMumbai SHIFTWEAR_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ERC20_CONTRACT_ADDRESS PROOF_CONTRACT_ADDRESS
 ```
 
 ```shell
-npx hardhat verify --network sepolia ERC20_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS 
+npx hardhat verify --network polygonMumbai ERC20_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS 
 ```
 
 ```shell
-npx hardhat verify --network sepolia PROOF_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ROYALTY_RECEIVER_ADDRESS
+npx hardhat verify --network polygonMumbai PROOF_CONTRACT_ADDRESS INIITAL_OWNER_ADDRESS ROYALTY_RECEIVER_ADDRESS
 ```
 

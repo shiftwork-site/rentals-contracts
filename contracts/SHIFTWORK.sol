@@ -44,7 +44,7 @@ contract SHIFTWORK is ERC721Base, IERC4907 {
             initialOwner
         )
     {
-        manager = 0x4a7D0d9D2EE22BB6EfE1847CfF07Da4C5F2e3f22;
+        manager = 0x5eB336F4FfF71e31e378948Bf2B07e6BffDc7C86;
         shiftToken = SHIFTTOKEN(_shiftTokenAddress); 
         shiftProofs = SHIFTPROOF(_shiftProofsAddress); 
         
