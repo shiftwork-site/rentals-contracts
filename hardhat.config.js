@@ -44,10 +44,6 @@ module.exports = {
     optimism: {
       url: "https://mainnet.optimism.io",
       accounts: [process.env.MAINNET_PRIVATE_KEY],
-      allowUnlimitedContractSize: true,
-      gas: 50000000000, //units of gas you are willing to pay, aka gas limit
-      gasPrice: 50000000000, //gas is typically in units of gwei, but you must enter it as wei here
-
     },
     "optimism-sepolia": {
       url: "https://sepolia.optimism.io",
@@ -71,7 +67,7 @@ module.exports = {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
       mainnet: process.env.ETHERSCAN_API_KEY,
-      optimism: process.env.OP_ETHERSCAN_API_KEY,
+      optimisticEthereum: process.env.OP_ETHERSCAN_API_KEY,
       "optimism-sepolia": process.env.OP_ETHERSCAN_API_KEY,
       polygonMumbai: process.env.ETHERSCAN_MUMBAI_API_KEY
     },
